@@ -216,8 +216,8 @@ void assemble_system(FE_Model *model) {
     double nu = model->nu;
 
     int max_diff = model->node_band;
-    model->M = allocate_sym_band_matrix(2 * n_node, 2 * max_diff + 1);
-    model->K = allocate_sym_band_matrix(2 * n_node, 2 * max_diff + 1);
+    model->M = allocate_band_sym(2 * n_node, 2 * max_diff + 1);
+    model->K = allocate_band_sym(2 * n_node, 2 * max_diff + 1);
     SymBandMatrix *M = model->M;
     SymBandMatrix *K = model->K;
 
@@ -504,15 +504,15 @@ void apply_dirichlet(
         i_bound = (numxy < K->k) ? 0 : numxy - K->k;
         for (i = i_bound; i < numxy; i++) {
             rhs[i] -= K->a[numxy][i] * val;
-            K->a[numxy][i] = 0.;
+            // K->a[numxy][i] = 0.;
         }
         // Zero out col associated to dof "numxy"
         i_bound = MIN(numxy + K->k + 1, K->n);
         for (i = numxy + 1; i < i_bound; i++) {
             rhs[i] -= K->a[i][numxy] * val;
-            K->a[i][numxy] = 0.;
+            // K->a[i][numxy] = 0.;
         }
-        K->a[numxy][numxy] = 1.;
+        K->a[numxy][numxy] = 1e14;
         rhs[numxy] = val;
         if (kind == 'n' || kind == 't')
             project_system(num, K, rhs, nx[j], ny[j]);

@@ -152,9 +152,9 @@ void compute_nodal_stress_lsq(FE_Model *mdl, const double *u, double *stress) {
     const double nu = mdl->nu;
 
     if (!M) {
-        M = allocate_sym_band_matrix(mdl->n_node, mdl->node_band);
+        M = allocate_band_sym(mdl->n_node, mdl->node_band);
         assemble_mass_lsq(mdl, M);
-        sym_band_LDL(M->data, M->n, M->k);
+        fctrz_band_sym(M);
     } else {
         M = mdl->M_scalar;
     }
@@ -164,18 +164,18 @@ void compute_nodal_stress_lsq(FE_Model *mdl, const double *u, double *stress) {
     // Compute the element stresses
     set_lsq_rhs(mdl, u, rhs);
 
-    solve_sym_band(M->data, M->n, M->k, rhs + 0 * n_node);
+    solve_band_sym(M, rhs + 0 * n_node);
     for (size_t i = 0; i < n_node; i++)
         stress[i * 9 + 0] = rhs[0 * n_node + idx_map[i]];
-    solve_sym_band(M->data, M->n, M->k, rhs + 1 * n_node);
+    solve_band_sym(M, rhs + 1 * n_node);
     for (size_t i = 0; i < n_node; i++)
         stress[i * 9 + 4] = rhs[1 * n_node + idx_map[i]];
-    solve_sym_band(M->data, M->n, M->k, rhs + 2 * n_node);
+    solve_band_sym(M, rhs + 2 * n_node);
     for (size_t i = 0; i < n_node; i++)
         stress[i * 9 + 1] = stress[i * 9 + 3] = rhs[2 * n_node + idx_map[i]];
 
     if (mdl->m_type == AXISYMMETRIC) {
-        solve_sym_band(M->data, M->n, M->k, rhs + 3 * n_node);
+        solve_band_sym(M, rhs + 3 * n_node);
         for (size_t i = 0; i < n_node; i++)
             stress[i * 9 + 8] = rhs[3 * n_node + idx_map[i]];
     } else if (mdl->m_type == PLANE_STRAIN) {

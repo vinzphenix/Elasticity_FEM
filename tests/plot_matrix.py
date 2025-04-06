@@ -40,8 +40,9 @@ def compute_eigenvalues(A, M, title):
         eigws, eigvs = sp.linalg.eigsh(A, k=n_eigws, M=M, which="SM")
         print("Small eigenvalues : ", eigws)
     else:
-        eigws, eigvs = np.linalg.eigh(A)
-        print("Eigenvalues : ", eigws)
+        eigws, eigvs = np.linalg.eigh(A[:-1, :-1])
+        print("Eigenvalues : ")
+        print(np.c_[eigws])
     print()
     return
 
@@ -90,8 +91,8 @@ def load_matrix(file_name):
             matrix = sp.csr_matrix((data, cols, row_ptr), shape=(n, n))
             matrix = matrix + matrix.T - sp.diags(matrix.diagonal())
             sum_lines = np.array(np.abs(matrix).sum(axis=1)).ravel()
-            print("Sum_j |K_ij|   |   Diagonal")
-            print(np.c_[sum_lines, matrix.diagonal()])
+            # print("Sum_j |K_ij|   |   Diagonal")
+            # print(np.c_[sum_lines, matrix.diagonal()])
             max_abs = np.amax(np.abs(matrix).data)
             
     return matrix, rhs, max_abs
@@ -106,15 +107,8 @@ if __name__ == "__main__":
     # matrices = [mass, stiff]
     # names = ["Mass Matrix", "Stiffness Matrix"]
 
-    # stiff = load_matrix("./K_csr.txt")
-    stiff = load_matrix("./K.txt")
-    compute_eigenvalues(stiff[0].toarray(), None, "Stiffness Matrix")
-    
-    matrix = stiff[0].toarray()
-    sol = np.linalg.solve(matrix, stiff[1])
-    print("Solution : ")
-    print(sol)
-    
+    stiff = load_matrix("./K_csr.txt")
+    compute_eigenvalues(stiff[0], None, "Stiffness Matrix")    
     
     matrices = [stiff]
     names = ["Stiffness Matrix"]

@@ -15,13 +15,13 @@
 // u = - 3/2 (rho * g / b) * L^4 / (E * h^3)
 
 static double scale;
-static const double W = 5.;
-static const double H = 0.15;
+static const double W = 20.;
+static const double H = 1.;
 static const double G = 9.81;
 
-static const double _E = 40e9;
-static const double _nu = 0.20;
-static const double _rho = 2300.;
+static const double _E = 211e9;
+static const double _nu = 0.3;
+static const double _rho = 7.85e3;
 static const double _L = W;
 
 void set_physics_beam(double params[4], Model2D *type) {
@@ -78,7 +78,7 @@ void mesh_beam(double mesh_size_factor, int e_type) {
     }
 
     int ierr;
-    gmshModelOccAddRectangle(0., -H / 2., 0., W, H, -1, 0.0, &ierr);
+    int rect = gmshModelOccAddRectangle(0., -H / 2., 0., W, H, -1, 0.0, &ierr);
     gmshModelOccSynchronize(&ierr);
     int force_x[] = {};
     int force_y[] = {};
@@ -96,9 +96,13 @@ void mesh_beam(double mesh_size_factor, int e_type) {
     gmshModelAddPhysicalGroup(1, dirichlet_y, 1, 6, "fix_y", &ierr);
     gmshModelAddPhysicalGroup(1, dirichlet_n, 0, 7, "fix_n", &ierr);
     gmshModelAddPhysicalGroup(1, dirichlet_t, 0, 8, "fix_t", &ierr);
+    gmshModelAddPhysicalGroup(2, &rect, 1, 9, "beam", &ierr);
     scale = mesh_size_factor; // set global variable
     gmshModelMeshSetSizeCallback(size_field_beam, NULL, &ierr);
+    
     ierr = mesh_tri_quad(e_type);
+
+    // gmshWrite("./mesh/beam.msh", &ierr);
     // gmshFltkRun(&ierr);
 
     return;

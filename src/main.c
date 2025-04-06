@@ -17,31 +17,54 @@
     ((double)((t2).tv_sec - (t1).tv_sec) +                                     \
      1e-9 * ((double)((t2).tv_nsec - (t1).tv_nsec)))
 
+void save_solutions(
+    FE_Model *model, char *name, double *eigv, double *eigw, int nb
+) {
+    FILE *f = fopen(name, "w");
+    if (f == NULL) {
+        fprintf(stderr, "Error opening file %s\n", name);
+        exit(1);
+    }
+    size_t nn = model->n_node;
+    int idx;
+
+    // Write solution(s)
+    nb = MAX(nb, 1);
+    fprintf(f, "# %d\n", nb);
+    for (int i_eig = 0; i_eig < nb; i_eig++) {
+        fprintf(f, "# %zu ", nn);
+        if (eigw != NULL) 
+            fprintf(f, "%20.15le", eigw[i_eig]);
+        fprintf(f, "\n");
+        for (int i = 0; i < nn; i++) {
+            idx = i_eig * 2 * nn + 2 * model->idx_map[i];
+            fprintf(f, "%.*le ", PRECISION, eigv[idx + 0]);
+            fprintf(f, "%.*le\n", PRECISION, eigv[idx + 1]);
+        }
+    }
+    fclose(f);
+}
+
 void solve_deformation(FE_Model *model) {
-    struct timespec t1, t2, t3, t4;
+    struct timespec t1, t2, t3;
     size_t n_node = model->n_node;
     SymBandMatrix *K = model->K;
-    double *rhs = (double *)calloc(2 * n_node, sizeof(double));
+    double *rhs = (double *)calloc(2 * n_node, sizeof(*rhs));
+    double *sol = (double *)malloc(2 * n_node * sizeof(*sol));
 
     clock_gettime(CLOCK_MONOTONIC, &t1);
     add_bulk_source(model, rhs);
     enforce_bd_conditions(model, rhs);
-    
-    // write_sym_band(model->K, rhs, "K.txt");
-    // CSRMatrix *csr_K = band_to_csr(K);
-    // write_csr(csr_K, NULL, "K_csr.txt");
-    // free_csr(csr_K);
-
+    // write_band_sym(model->K, rhs, "K.txt");
     clock_gettime(CLOCK_MONOTONIC, &t2);
     printf("%30s : %6.3lf s\n", "Boundaries", TIMESP(t1, t2));
 
-    sym_band_LDL(K->data, K->n, K->k);
+    int nit = solve_system(K, model->solver, rhs, sol);
     clock_gettime(CLOCK_MONOTONIC, &t3);
-    printf("%30s : %6.3lf s\n", "Factorize", TIMESP(t2, t3));
-
-    solve_sym_band(K->data, K->n, K->k, rhs);
-    clock_gettime(CLOCK_MONOTONIC, &t4);
-    printf("%30s : %6.3lf s\n\n", "Sys solve", TIMESP(t3, t4));
+    printf("%30s : %6.3lf s", "Sys solve", TIMESP(t2, t3));
+    if (1 != nit)
+        printf(" (%d it.)\n", nit);
+    printf("\n\n");
 
     int ierr, n_views, *views;
     double *bounds;
@@ -49,10 +72,10 @@ void solve_deformation(FE_Model *model) {
 
     double *data_forces = malloc(6 * model->n_bd_edge * sizeof(double));
     // compute_bd_forces(model, rhs, data_forces, 1, 0);
-    visualize_disp(model, rhs, views[1], 0, &bounds[2]);
-    visualize_stress(model, rhs, views, 1, 0, data_forces, bounds);
+    visualize_disp(model, sol, views[1], 0, &bounds[2]);
+    visualize_stress(model, sol, views, 1, 0, data_forces, bounds);
     visualize_bd_forces(model, data_forces, views[0], 1, &bounds[0]);
-    
+
     create_tensor_aliases(views);
     set_view_options(n_views, views, bounds);
     // revolve_geometry(model);
@@ -60,6 +83,7 @@ void solve_deformation(FE_Model *model) {
     gmshFltkFinalize(&ierr);
     free(data_forces);
     free(rhs);
+    free(sol);
 }
 
 void find_eigenmodes(FE_Model *model, int nb) {
@@ -72,8 +96,8 @@ void find_eigenmodes(FE_Model *model, int nb) {
     double *eigv = eigw + nb;
     double rtol = 1e-11;
 
-    // double *rhs = (double *)malloc(2 * n * sizeof(double));
-    // enforce_bd_conditions(model, rhs);
+    double *rhs = (double *)malloc(2 * n * sizeof(double));
+    enforce_bd_conditions(model, rhs);
     clock_gettime(CLOCK_MONOTONIC, &t1);
     compute_eigvs_deflation(model->K, model->M, eigw, eigv, nb, rtol, max_it);
     clock_gettime(CLOCK_MONOTONIC, &t2);
@@ -113,48 +137,6 @@ void find_eigenmodes(FE_Model *model, int nb) {
     free(views);
 }
 
-void save_solutions(
-    FE_Model *model, char *name, double *eigv, double *eigw, int nb
-) {
-    FILE *f = fopen(name, "w");
-    if (f == NULL) {
-        printf("Error opening file %s\n", name);
-        exit(1);
-    }
-    size_t nn = model->n_node;
-    size_t ne = model->n_elem;
-    size_t nl = model->n_local;
-    int idx;
-    double L = model->L_ref;
-    double *x = model->coords;
-
-    // Write mesh
-    fprintf(f, "# %zu %zu\n", ne, nl);
-    for (size_t i = 0; i < ne; i++) {
-        for (size_t j = 0; j < nl; j++) {
-            fprintf(f, "%zu ", model->elem_nodes[i * nl + j] - 1);
-        }
-        fprintf(f, "\n");
-    }
-    // Write coords
-    fprintf(f, "# %zu %d\n", model->n_node, 2);
-    for (size_t i = 0; i < nn; i++) {
-        fprintf(f, "%.10le %.10le\n", x[2 * i + 0] * L, x[2 * i + 1] * L);
-    }
-
-    // Write eigenvectors
-    fprintf(f, "# %d\n", nb);
-    for (int i_eig = 0; i_eig < nb; i_eig++) {
-        fprintf(f, "# %20.15le\n", eigw[i_eig]);
-        for (int i = 0; i < nn; i++) {
-            idx = i_eig * 2 * nn + 2 * model->idx_map[i];
-            fprintf(f, "%.*le ", PRECISION, eigv[idx + 0]);
-            fprintf(f, "%.*le\n", PRECISION, eigv[idx + 1]);
-        }
-    }
-    fclose(f);
-}
-
 void display_info(FE_Model *model, int step, struct timespec ts[4]) {
 
     char *m_str[3] = {"Plane stress", "Plane strain", "Axisymmetric"};
@@ -175,11 +157,13 @@ void display_info(FE_Model *model, int step, struct timespec ts[4]) {
         printf("%30s = %zu\n", "Number of elements", model->n_elem);
         printf("%30s = %zu\n", "Number of nodes", model->n_node);
         printf("%30s = %s\n", "Renumbering", r_str[model->renum]);
-        printf("%30s = %zu\n\n", "Matrix bandwidth", 2 * model->node_band + 1);
+        printf("%30s = %zu\n", "Matrix bandwidth", 2 * model->node_band + 1);
+        const char *s_str = solver_name(model->solver);
+        printf("%30s = %s\n\n", "Solver", s_str);
     } else if (step == 3) {
         printf("%30s : %6.3lf s\n", "Mesh load", TIMESP(ts[0], ts[1]));
         printf("%30s : %6.3lf s\n", "Node renumber", TIMESP(ts[1], ts[2]));
-        printf("%30s : %6.3lf s\n\n", "Assembly", TIMESP(ts[2], ts[3]));
+        printf("%30s : %6.3lf s\n", "Assembly", TIMESP(ts[2], ts[3]));
     }
 }
 
@@ -200,14 +184,14 @@ int main(int argc, char *argv[]) {
     // Simulation parameters
     const ElementType e_type = TRI;
     const Renumbering renum = RENUM_RCMK;
+    const LinearSolver solver = Band;
 
-    FE_Model *model = create_FE_Model(argv[1], e_type, renum);
+    FE_Model *model = create_FE_Model(argv[1], e_type, renum, solver);
     display_info(model, 1, NULL);
 
     gmshInitialize(argc, argv, 0, 0, &ierr);
     gmshOptionSetNumber("General.Verbosity", 2, &ierr);
     model->mesh_model(meshSizeFactor, e_type);
-    fflush(stdout);
 
     clock_gettime(CLOCK_MONOTONIC, &times[0]);
     load_mesh(model);
@@ -215,7 +199,6 @@ int main(int argc, char *argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &times[1]);
     renumber_nodes(model);
     display_info(model, 2, NULL);
-    fflush(stdout);
 
     clock_gettime(CLOCK_MONOTONIC, &times[2]);
     assemble_system(model);

@@ -49,7 +49,7 @@ MeshGraph *create_adjacency(
     graph->n_node = n_node;
     graph->offsets = calloc(n_node + 1, sizeof(size_t));
 
-    // First pass: count degree of each node (inside nodes counted twice)
+    // First pass: count degree of each node
     // Shift the count by 1 in the "offset" array
     size_t node;
     for (size_t i = 0; i < n_elem; i++) {
@@ -58,7 +58,7 @@ MeshGraph *create_adjacency(
             graph->offsets[node + 1] += 1;
         }
     }
-    // Add 1 for every boundary node
+    // Add 1 for every boundary node valence
     for (size_t i = 0; i < n_bd_edge; i++) {
         node = bd_edges[4 * i + 0] - s;
         graph->offsets[node + 1] += 1;
@@ -268,78 +268,3 @@ void renumber(
         exit(1);
     }
 }
-
-// clang-format off
-// int main(int argc, char *argv[]) {
-int test_renumber(int argc, char *argv[]) {
-
-    // TRIANGLE MESH
-    // size_t n_loc = 3;
-    // size_t n_elem = 8;
-    // size_t elems[] = {
-    //     1, 3, 2, 
-    //     2, 3, 4, 
-    //     3, 5, 4, 
-    //     4, 5, 6,
-    //     2, 4, 8, 
-    //     2, 8, 7, 
-    //     4, 6, 9, 
-    //     4, 9, 8
-    // };
-    // size_t n_node = 9;
-    // double coords[] = {
-    //     0.2, 2.,
-    //     1.2, 2.1,
-    //     0.1, 1.,
-    //     1.1, 1.1,
-    //     0., 0.,
-    //     1., 0.1,
-    //     2.2, 2.,
-    //     2.1, 1.,
-    //     2.0, 0.
-    // };
-    // size_t n_bd_node = 8;
-    // size_t bd_nodes[] = {2, 1, 3, 5, 5, 6, 1, 3, 6, 9, 9, 8, 8, 7, 7, 2};
-
-    // QUAD MESH
-    size_t n_loc = 4;
-    size_t n_elem = 3;
-    size_t elems[] = {
-        1, 2, 3, 4,
-        1, 6, 7, 2,
-        5, 6, 1, 4
-    };
-    size_t n_node = 7;
-    double coords[] = {
-        +0., +0.,
-        +1., +1.,
-        +0., +2.,
-        -1., +1.,
-        -1.1, -1.,
-        -0.1, -1.,
-        +0.9, -1.
-    };
-    size_t n_bd_node = 6;
-    size_t bd_nodes[] = {2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 2};
-    // clang-format on
-
-    size_t *idx_map;
-    renumber(
-        n_elem, n_loc, elems, n_bd_node, bd_nodes, n_node, coords, &idx_map, 3
-    );
-    for (size_t i = 0; i < n_node; i++) {
-        printf("%zu -> %zu\n", i + 1, idx_map[i] + 1);
-    }
-
-    size_t band = compute_band(n_elem, 3, elems, idx_map);
-    printf("Band size = %zu\n", band);
-
-    free(idx_map);
-    return 0;
-}
-
-// 1 -- 2 -- 7
-// |  / |  \ |
-// 3 -- 4 -- 8
-// |  / |  \ |
-// 5 -- 6 -- 9

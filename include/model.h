@@ -3,7 +3,6 @@
 
 #include "matrix.h"
 #include "models.h"
-
 #include <stddef.h>
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -31,6 +30,7 @@ typedef struct FE_Model {
     Model2D m_type;
     ElementType e_type;
     Renumbering renum;
+    LinearSolver solver;
     size_t node_band;
     size_t n_elem;
     size_t n_local;
@@ -55,7 +55,9 @@ typedef struct {
     size_t n1, n2;
 } Edge;
 
-FE_Model *create_FE_Model(const char *name, ElementType etp, Renumbering rnb);
+FE_Model *create_FE_Model(
+    const char *name, ElementType etp, Renumbering rnb, LinearSolver solver
+);
 void free_FE_Model(FE_Model *model);
 void load_mesh(FE_Model *model);
 void renumber_nodes(FE_Model *model);

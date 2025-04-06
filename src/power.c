@@ -12,6 +12,16 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define PRECISION 10
 
+
+void mat_vec_call(size_t n, const CSRMatrix *csr, const double *x, double *y) {
+    if (!csr) {
+        cblas_dcopy(n, x, 1, y, 1);
+        return;
+    } else {
+        mat_vec_csr_sym(csr, x, y);
+    }
+}
+
 /**
  * @brief Remplit un vecteur de taille n avec des valeurs aléatoires
  * @note Bonne pratique pour calculer un vecteur propre
@@ -54,13 +64,11 @@ int generalized_power(
     }
 
     int iter, i;
-    int k = K->k;
     int n = K->n;
     double diff_eigw, diff_eigv, lb, lb_prev, norm, eps;
     double *x = eigv;
     double *y = (double *)malloc(n * sizeof(double)); // previous
     double *z = (double *)malloc(n * sizeof(double)); // orthog. buffer
-    double *LDL = K->data;
 
     randomize_eigv(x, n); // Initialize the eigenvector
     diff_eigw = 1.;       // Difference in eigenvalue
@@ -68,23 +76,23 @@ int generalized_power(
     lb = lb_prev = 0.;    // Previous eigenvalue guess
     eps = rel_tol;        // Convergence tolerance
 
-    csr_sym_mat_vec(n, M, x, z);
+    mat_vec_call(n, M, x, z);
 
     for (iter = 0; (eps < diff_eigw) && (iter < max_iter); iter++) {
 
         // Solve the linear system LDL' v = M v_prev
         cblas_dcopy(n, z, 1, x, 1);
         cblas_dcopy(n, z, 1, y, 1);
-        solve_sym_band(LDL, n, k, x);
+        solve_band_sym(K, x);
         
         // Orthogonalize (wrt M) the eigenvector if necessary
         for (i = 1; i <= deflate; i++) {
-            csr_sym_mat_vec(n, M, x, z);
+            mat_vec_call(n, M, x, z);
             norm = -cblas_ddot(n, eigv - i * n, 1, z, 1);
             cblas_daxpy(n, norm, eigv - i * n, 1, x, 1);
         }
 
-        csr_sym_mat_vec(n, M, x, z);
+        mat_vec_call(n, M, x, z);
         norm = sqrt(cblas_ddot(n, x, 1, z, 1)); // x' M x
         cblas_dscal(n, 1. / norm, x, 1);        // Normalize the eigenvector
         cblas_dscal(n, 1. / norm, z, 1);        // Normalize the eigenvector
@@ -117,13 +125,10 @@ double check_eig(const SymBandMatrix *K, CSRMatrix *M, double *x, double l) {
     double tmp;
     double *y = (double *)malloc(n * sizeof(double));
 
-    if (M)
-        csr_sym_mat_vec(n, M, x, y);
-    else
-        cblas_dcopy(n, x, 1, y, 1);
+    mat_vec_call(n, M, x, y);
     tmp = cblas_ddot(n, x, 1, y, 1);
 
-    cblas_dsbmv(BRM, BLW, n, k, 1., K->data, k + 1, x, 1, 0., y, 1);
+    cblas_dsbmv(RWMJ, LOWR, n, k, 1., K->data, k + 1, x, 1, 0., y, 1);
     tmp = cblas_ddot(n, x, 1, y, 1) / tmp;
 
     free(y);
@@ -163,10 +168,10 @@ void compute_eigv_shift(
     }
 
     // Factorize the matrix in-place (in K)
-    sym_band_LDL(K->data, n, k);
+    fctrz_band_sym(K);
 
     // Transform M into CSR format
-    CSRMatrix *M_csr = (M) ? band_to_csr(M) : NULL;
+    CSRMatrix *M_csr = (M) ? band_to_csr_sym(M) : NULL;
 
     // Compute the eigenvector
     int n_it = generalized_power(K, M_csr, eigw, eigv, rtol, max_it, 0, 0);
@@ -208,18 +213,23 @@ void compute_eigvs_deflation(
     int k = K->k;
     int n_it;
     double *eigw, *eigv, err;
-    SymBandMatrix *K_zero = allocate_sym_band_matrix(n, k);
+    SymBandMatrix *K_zero = allocate_band_sym(n, k);
     memcpy(K_zero->data, K->data, n * (k + 1) * sizeof(double));
 
     // Factorise la matrice K en LDL'
     double shift = 0.; // avoid zero eigws that make K singular
-    for (int i = 0; i < n * (k + 1); i++) {
-        K->data[i] -= shift * M->data[i];
+    if (M) {
+        cblas_daxpy(n * (k + 1), -shift, M->data, 1, K->data, 1);
+    } else {
+        for (int i = 0; i < n; i++) {
+            K->data[i * (k + 1) + k] -= shift;
+        }
     }
-    sym_band_LDL(K->data, n, k);
+    
+    fctrz_band_sym(K);
 
     // Transforme M en format CSR
-    CSRMatrix *M_csr = (M) ? band_to_csr(M) : NULL;
+    CSRMatrix *M_csr = (M) ? band_to_csr_sym(M) : NULL;
 
     for (int i = 0; i < nb; i++) {
         eigws[i] = shift;
@@ -240,37 +250,9 @@ void compute_eigvs_deflation(
         }
     }
 
-    free_sym_band_matrix(K_zero);
+    free_band_sym(K_zero);
     if (M_csr)
         free_csr(M_csr);
-}
-
-// -----------------------------------------------------------------------------
-// TESTS
-// -----------------------------------------------------------------------------
-
-void lapack_soluce(
-    const SymBandMatrix *K, const SymBandMatrix *M, double *eigws
-) {
-    int n = K->n;
-    int k = K->k;
-
-    double *K_copy = (double *)malloc(n * (k + 1) * sizeof(double));
-    double *M_copy = (double *)malloc(n * (k + 1) * sizeof(double));
-    memcpy(K_copy, K->data, n * (k + 1) * sizeof(double));
-    memcpy(M_copy, M->data, n * (k + 1) * sizeof(double));
-    memset(eigws, 0, n * sizeof(double));
-
-    // REQUIRES LAPACK LIBRARY
-    // clang-format off
-    // LAPACKE_dsbgv(
-    //     LAPACK_COL_MAJOR, 'N', 'U', n, k, k, 
-    //     K_copy, k+1, M_copy, k+1, eigws, NULL, n
-    // );
-    // clang-format on
-
-    free(K_copy);
-    free(M_copy);
 }
 
 /**
@@ -288,7 +270,7 @@ void print_XAX(
     for (int j = 0; j < nb; j++) {
         const double *v = X + j * n;
         if (A)
-            cblas_dsbmv(BRM, BLW, n, k, 1., A, k + 1, v, 1, 0., tmp, 1);
+            cblas_dsbmv(RWMJ, LOWR, n, k, 1., A, k + 1, v, 1, 0., tmp, 1);
         else
             cblas_dcopy(n, v, 1, tmp, 1);
         printf("  ");
@@ -302,112 +284,4 @@ void print_XAX(
     }
     printf("\n");
     free(tmp);
-}
-
-int cmp_abs(const void *a, const void *b) {
-    double abs_a = fabs(*(double *)a);
-    double abs_b = fabs(*(double *)b);
-    return (abs_a > abs_b) - (abs_a < abs_b);
-}
-
-void compare_sols(
-    double *eigws, double *eigws_ref, double r_eps, int nb, int n
-) {
-    double diff, eps;
-    char red_color[] = "\033[1;31m";
-    char dft_color[] = "\033[0m";
-    char info[64], msg[128];
-    int count = 0;
-    qsort(eigws, nb, sizeof(double), cmp_abs);
-    qsort(eigws_ref, n, sizeof(double), cmp_abs);
-
-    printf("\n===========  Deflation algorithm verification  ===========\n");
-    printf("%18s %10s %15s\n", "Me", "LAPACK", "Difference");
-    for (int i = 0; i < n; i++) {
-        if (i < nb) {
-            eps = fmax(1e-12, r_eps * fabs(eigws[i]));
-            diff = fabs(eigws[i] - eigws_ref[i]);
-            sprintf(
-                info, "%18.3lf %10.3lf %15.6le", eigws[i], eigws_ref[i], diff
-            );
-        } else {
-            eps = 1.;
-            diff = 0.;
-            sprintf(info, "%18s %10.3lf %15s", "", eigws_ref[i], "");
-        }
-        if (eps < diff) {
-            sprintf(msg, "%s%s%s", red_color, info, dft_color);
-            count++;
-        } else {
-            sprintf(msg, "%s", info);
-        }
-        printf("%s\n", msg);
-    }
-    if (count) {
-        printf("%33s%d %10s\n", "", count, "errors");
-    }
-    printf("\n");
-}
-
-// int main() {
-int test_power() {
-    int n = 400;
-    int k = 40;
-    int nb = 10;
-
-    srand48(0);
-    SymBandMatrix *K = allocate_sym_band_matrix(n, k);
-    SymBandMatrix *M = allocate_sym_band_matrix(n, k);
-    for (int i = 0; i < n * (k + 1); i++) {
-        K->data[i] = 2. * drand48() - 1.;
-        M->data[i] = (2. * drand48() - 1.) * 0.;
-    }
-    for (int i = 0; i < n; i++) {
-        K->data[i * (k + 1) + k] += 2 * k;
-        K->data[i * (k + 1) + k / 2] += k;
-        M->data[i * (k + 1) + k] += 1.;
-    }
-    int i1 = 3;
-    for (int j = MAX(i1 - k, 0); j <= i1; j++)
-        K->a[i1][j] = 0.;
-    for (int j = i1; j < MIN(i1 + k + 1, n); j++)
-        K->a[j][i1] = 0.;
-    // print_sym_band(K);
-    // exit(0);
-    // print_sym_band(M);
-
-    // Required arrays
-    double *eigws = (double *)malloc((nb + 1) * n * sizeof(double));
-    double *eigvs = eigws + n;
-
-    // Test arrays
-    double *eigws_lapack = (double *)malloc(n * sizeof(double));
-    double *tmp = (double *)malloc(nb * sizeof(double));
-    double *K_zero = (double *)malloc(n * (k + 1) * sizeof(double));
-    double *M_zero = (double *)malloc(n * (k + 1) * sizeof(double));
-    memcpy(K_zero, K->data, n * (k + 1) * sizeof(double));
-    memcpy(M_zero, M->data, n * (k + 1) * sizeof(double));
-
-    // TEST DEFLATION
-    lapack_soluce(K, M, eigws_lapack);
-    compute_eigvs_deflation(K, NULL, eigws, eigvs, nb, 1e-12, 5000);
-    compare_sols(eigws, eigws_lapack, 1e-8, nb, nb);
-
-    // TEST SHIFT
-    // eigws[0] = 20.;
-    // compute_eigv_shift(K, NULL, &eigws[0], eigvs, 1e-12, 1000);
-
-    print_XAX(K_zero, eigvs, n, k, 1, "X' K X");
-    print_XAX(NULL, eigvs, n, k, nb, "X' X");
-    print_XAX(M_zero, eigvs, n, k, nb, "X' M X");
-
-    free_sym_band_matrix(K);
-    free_sym_band_matrix(M);
-    free(eigws);
-
-    free(eigws_lapack);
-    free(tmp);
-    free(K_zero);
-    free(M_zero);
-    return 0;
 }

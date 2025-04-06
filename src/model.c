@@ -9,13 +9,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-FE_Model *create_FE_Model(const char *name, ElementType etp, Renumbering rnb) {
+FE_Model *create_FE_Model(
+    const char *name, ElementType etp, Renumbering rnb, LinearSolver solver
+) {
 
     FE_Model *model = (FE_Model *)malloc(sizeof(FE_Model));
     model->model_name = name;
 
-    model->e_type = etp; // element: triangle, quadrilateral
+    model->e_type = etp;    // element: triangle, quadrilateral
     model->renum = rnb;     // renumbering: none, x, y, rcmk
+    model->solver = solver; // solver: Band, CG_[flavor]
     model->M_scalar = NULL;
     double parameters[4];
 
@@ -79,10 +82,10 @@ void free_FE_Model(FE_Model *model) {
     free(model->coords);
     free(model->idx_map);
     free(model->bd_edges);
-    free_sym_band_matrix(model->M);
-    free_sym_band_matrix(model->K);
+    free_band_sym(model->M);
+    free_band_sym(model->K);
     if (model->M_scalar != NULL) {
-        free_sym_band_matrix(model->M_scalar);
+        free_band_sym(model->M_scalar);
     }
     free(model);
 }
