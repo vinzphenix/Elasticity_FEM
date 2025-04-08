@@ -294,7 +294,7 @@ void analyze_CG(int dim, int analyze) {
     for (int run = 0; run < 6; run++) {
 
         // size_t nx = n_to_nx(dim, 1e3 * (1 << run)); // 1D (high kappa)
-        size_t nx = n_to_nx(dim, 1e3 * (1 << run)); // 2D/3D
+        size_t nx = n_to_nx(dim, 1e3 * (1 << run)); // 2D/3D (30e3)
         n = regular_grid_FEM(dim, nx, &mat);
         // write_csr(mat, NULL, "new_matrix.txt");
         ratio = 2e2 * mat->nnz / (double)(n * (n + 1));

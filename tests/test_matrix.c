@@ -39,8 +39,8 @@ void random_mat(idx_t n, idx_t k, double ratio, CSRMatrix **csr_ptr) {
 
     CSRMatrix *mat = band_to_csr_sym(K);
 
-    write_band_sym(K, NULL, "K.txt");
-    write_csr(mat, NULL, "K_csr.txt");
+    // write_band_sym(K, NULL, "K.txt");
+    // write_csr(mat, NULL, "K_csr.txt");
 
     free_band_sym(K);
     *csr_ptr = mat;

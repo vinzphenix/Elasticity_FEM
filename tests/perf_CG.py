@@ -87,7 +87,7 @@ def plot_data(data, filename):
         ax.legend()
 
     fig.tight_layout()
-    fig.savefig(filename + ".svg", bbox_inches="tight")
+    # fig.savefig(filename + ".svg", bbox_inches="tight")
     plt.show()
     return
 

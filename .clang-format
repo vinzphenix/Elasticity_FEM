@@ -1,0 +1,18 @@
+BasedOnStyle: LLVM
+ColumnLimit: 80
+AlignAfterOpenBracket: BlockIndent
+BinPackParameters: false
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: true
+BreakBeforeBraces: Attach
+BreakBeforeBinaryOperators: None
+BraceWrapping:
+  AfterFunction: false
+  AfterClass: false
+  AfterStruct: false
+  SplitEmptyFunction: false
+IndentWidth: 4
+UseTab: Never
+AlwaysBreakAfterReturnType: None
+AllowShortEnumsOnASingleLine: false

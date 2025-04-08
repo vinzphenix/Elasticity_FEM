@@ -182,7 +182,7 @@ int main() {
     printf("-----------------   Inverse power shift   ------------------\n");
     test_power(20, 6, 0, 1, info);
     printf("-----------------        Deflation        ------------------\n");
-    test_power(20, 6, 10, 1, info);
+    test_power(20, 6, 20, 1, info);
     printf("\n");
 
     return 0;
