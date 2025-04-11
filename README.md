@@ -7,7 +7,7 @@ $$\begin{aligned}
 && \text{in } \Omega\\
 \boldsymbol\sigma &= 2\mu \boldsymbol\epsilon + \lambda \mathrm{tr}(\boldsymbol\epsilon) \boldsymbol\delta\\
 \boldsymbol \epsilon &= 
-(\nabla \mathbf{u}) + (\nabla \mathbf{u})^\intercal \\
+(\nabla \mathbf{u}) + (\nabla \mathbf{u})^* \\
 \mathbf{\mathbf{u}} &= \mathbf{u}_D && \text{on } \partial\Omega_D\\
 \boldsymbol{\sigma}\cdot\mathbf{n} &= \mathbf{t}_N && \text{on } \partial\Omega_N\\
 \boldsymbol{\sigma}\cdot\mathbf{n} + k \mathbf{u} &= \mathbf{t}_R && \text{on } \partial\Omega_R
@@ -18,7 +18,7 @@ The deformation problem reduces to a linear system $K u = b$ when the above is d
 The elasto-dynamic problem is given below for the continuum and the discrete problem
 
 $$\begin{aligned}
-\rho \: \partial_t^2 \mathbf{u} &= \nabla \cdot \boldsymbol\sigma(\mathbf{u}) + \mathbf{f}\\
+\rho \partial_t^2 \mathbf{u} &= \nabla \cdot \boldsymbol\sigma(\mathbf{u}) + \mathbf{f}\\
 M \ddot{u} + Ku &= b
 \end{aligned}$$
 
@@ -54,7 +54,7 @@ where
 - [x] FEM matrices assembled in packed band storage
 - [x] 2D plane stress / 2D plane strain / 3D axisymmetric
 - [x] Dirichlet - Neumann - Robin boundary conditions
-- [x] $x$/$y$ or normal/tangent boundary conditions
+- [x] $x$ / $y$ or normal / tangent boundary conditions
 - [x] RCMK renumbering of nodes
 - [x] Band $LDL^*$ linear solver
 - [x] Iterative sparse PCG (Jacobi, SSOR, ILU0, ILU1)
