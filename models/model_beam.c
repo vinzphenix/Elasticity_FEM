@@ -10,13 +10,9 @@
 // Classic clamped/free beam
 // -----------------------------------------------------------------------------
 
-// Expected end displacement with uniform load
-// u = -rho * g * L^4 / (8 * E * I) | I = b * h^3 / 12
-// u = - 3/2 (rho * g / b) * L^4 / (E * h^3)
-
 static double scale;
 static const double W = 20.;
-static const double H = 1.;
+static const double H = 1.5;
 static const double G = 9.81;
 
 static const double _E = 211e9;
@@ -44,8 +40,13 @@ void set_bd_disp_beam(int entity, char kind, const double xy[2], double u[1]) {
 }
 
 void set_bd_force_beam(int entity, char kind, const double xy[2], double f[2]) {
-    f[0] = 0.;
-    f[1] = 0.;
+    if (entity == 3 && kind == 'n') {
+        f[0] = 0.;
+        f[1] = -_rho * G * H;
+    } else {
+        f[0] = 0.;
+        f[1] = 0.;    
+    }
 }
 
 double size_field_beam(
@@ -62,7 +63,7 @@ double size_field_beam(
 void mesh_beam(double mesh_size_factor, int e_type) {
 
     // Requires plane stress
-    if (0) {
+    if (1) {
         // q L⁴/8EI   ---   I = B H³/12   ---    q = ρgS   ---   S = BH
         // --> v = 3/2 (ρg) L⁴ / E H²  [m]
         double u_clamped = -3. / 2. * _rho * G * W * W * W * W / (_E * H * H);
@@ -82,7 +83,7 @@ void mesh_beam(double mesh_size_factor, int e_type) {
     gmshModelOccSynchronize(&ierr);
     int force_x[] = {};
     int force_y[] = {};
-    int force_n[] = {};
+    int force_n[] = {}; //3
     int force_t[] = {};
     int dirichlet_x[] = {4};
     int dirichlet_y[] = {4};

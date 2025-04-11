@@ -2,11 +2,10 @@
 
 This work is a Finite Element sovler for 2D isotropic linear elasticty:
 
-$$ \begin{aligned}
+$$\begin{aligned}
 0 &= \nabla \cdot \boldsymbol\sigma(\mathbf{u}) + \mathbf{f}
 && \text{in } \Omega\\
-\boldsymbol\sigma &= 2\mu \boldsymbol\epsilon 
-+ \lambda \mathrm{tr}(\boldsymbol\epsilon) \boldsymbol\delta\\
+\boldsymbol\sigma &= 2\mu \boldsymbol\epsilon + \lambda \mathrm{tr}(\boldsymbol\epsilon) \boldsymbol\delta\\
 \boldsymbol \epsilon &= 
 (\nabla \mathbf{u}) + (\nabla \mathbf{u})^\intercal \\
 \mathbf{\mathbf{u}} &= \mathbf{u}_D && \text{on } \partial\Omega_D\\
@@ -16,11 +15,11 @@ $$ \begin{aligned}
 
 The deformation problem reduces to a linear system $K u = b$ when the above is discretized with finite elements.
 
-The dynamic problem is given below for the continuum and the discrete problem
+The elasto-dynamic problem is given below for the continuum and the discrete problem
 
 $$\begin{aligned}
-\partial_t \mathbf{u} &= \nabla \cdot \boldsymbol\sigma(\mathbf{u}) + \mathbf{f}\\
-M \ddot{u} + Ku &= f
+\rho \: \partial_t^2 \mathbf{u} &= \nabla \cdot \boldsymbol\sigma(\mathbf{u}) + \mathbf{f}\\
+M \ddot{u} + Ku &= b
 \end{aligned}$$
 
 Using a fourier expansion $U=\Phi \exp(\imath \omega t)$, we find a generalized eigenvalue problem whose solutions are the natural frequencies and shapes of the structure:

@@ -3,7 +3,7 @@
 \usepackage{amssymb}
 \usepackage[margin=2.5cm]{geometry}
 
-\title{Élasticité linéaire}
+\title{Élasticité linéaire 2D}
 \author{Vincent Degrooff}
 \date{\today}
 
@@ -13,6 +13,8 @@
 
 \begin{document}
 \maketitle
+
+\section{Modèle constitutif}
 
 On s'intéresse à la mécanique du solide dans l'hypothèse de petites déformations.
 Les particules d'un corps soumis à différentes forces de volume et de surface se 
@@ -29,14 +31,126 @@ suivantes :
 \end{align}
 
 Les tenseurs symétriques de déformation $\strain$ et de contraintes $\stress$, 
-sont liés par une loi constitutive à travers le tenseur deraideur d'ordre $4$ 
-$\mathbf{C}$. Dans le cas d'un matériau isotrope, on trouve la relation
+sont liés par une loi constitutive à travers le tenseur de raideur $\mathbf{C}$
+d'ordre $4$. Dans le cas d'un matériau isotrope, on trouve la relation
 \begin{align}
-    \stress &= 2\mu \strain + \lambda \mathrm{tr}(\strain) \mathbf{I}\\
-    \mu &= \frac{E}{1 + \nu}\\
+    \stress &= 2\mu \strain + \lambda \mathrm{tr}(\strain) \mathbf{I} 
+    \label{eq:constitutive}\\
+    \mu &= \frac{E}{2(1 + \nu)}\\
     \lambda &= \frac{E\nu}{(1+\nu)(1 - 2\nu)}
 \end{align}
 
+où 
+\begin{itemize}
+    \item $E$ [Pa], le module de Young, relie la déformation à la contrainte de 
+    traction / compression.
+    \item $\nu$ [-], le coefficient de Poisson, quantifie la déformation 
+    d'un matériau dans la direction perpendiculaire à l'effort.
+\end{itemize}
+$E$ est le module d'élasticité et $\nu$ le coefficient de Poisson.
+
+Bien que la physique du solide soit évidemment tri-dimensionnelle, il est 
+souvent possible de réduire le problème à deux dimensions, voire une seule. Ici,
+nous allons nous intéresser à des cas particuliers où l'on peut négliger
+l'influence de la troisième dimension :
+\begin{itemize}
+    \item \textbf{Déformations planes} : la section d'un solide de grande 
+    profondeur ne peut pas se déformer dans cette direction.
+    \item \textbf{Tension planes} : un solide de faible épaisseur ne subit pas 
+    de déformation dans la direction de l'épaisseur.
+    \item \textbf{Axisymétrie} : un solide de révolution soumis à des forces
+    axisymétriques se déforme indépendamment de la position angulaire.
+\end{itemize}
+
+
+\subsection{Déformations planes}
+En considérant un déplacement $\uu = u(x,y)\mathbf{e}_1 + v(x,y)\mathbf{e}_2$, 
+dont on peut négliger la dépendance en $z$ et le déplacement dans cette 
+direction, on obtient les tenseurs de déformation, et de contrainte grâce à 
+l'équation constitutive \eqref{eq:constitutive}:
+\begin{gather*}
+    2\strain =
+    \begin{bmatrix}
+        2u_x & u_y + v_x & 0\\
+        u_y + v_x & 2v_y & 0\\
+        0 & 0 & 0
+    \end{bmatrix} \qquad
+    \stress =
+    \begin{bmatrix}
+        \sigma_{xx} & \sigma_{xy} & 0\\
+        \sigma_{xy} & \sigma_{yy} & 0\\
+        0 & 0 & \sigma_{zz}
+    \end{bmatrix}\\[1em]
+    \begin{bmatrix}
+        \sigma_{xx}\\
+        \sigma_{yy}\\
+        \sigma_{xy}\\
+        \sigma_{zz}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        2 \mu + \lambda & \lambda & 0\\
+        \lambda & 2 \mu + \lambda & 0\\
+        0 & 0 & \mu\\
+        \lambda & \lambda & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        \epsilon_{xx}\\
+        \epsilon_{yy}\\
+        2\epsilon_{xy}
+    \end{bmatrix}\qquad 
+    \begin{aligned}
+        2\mu + \lambda &= E \: \frac{1 - \nu}{(1 + \nu)(1 - 2\nu)}\\
+        \lambda &= E \: \frac{\nu}{(1 + \nu)(1 - 2\nu)}\\
+        \mu &= E \: \frac{1}{2(1 + \nu)}
+    \end{aligned}
+\end{gather*}
+
+\subsection{Tensions planes}
+En considérant que la pièce est soumise à des forces de traction dans le plan
+$xy$ uniquement, on force la contrainte $\sigma_{zz}$ à être nulle et donc que
+$\epsilon_{zz} = -\frac{\lambda}{2\mu+\lambda} (\epsilon_{xx} + \epsilon_{yy})
+= -\frac{\nu}{1-\nu} (\epsilon_{xx} + \epsilon_{yy})$.
+En considérant à nouveau un déplacement $\uu = u(x,y)\mathbf{e}_1 
++ v(x,y)\mathbf{e}_2$, on obtient les relations
+\begin{gather*}
+    2\strain =
+    \begin{bmatrix}
+        2u_x & u_y + v_x & 0\\
+        u_y + v_x & 2v_y & 0\\
+        0 & 0 & -\frac{2\nu}{1-\nu} (u_x + v_y)
+    \end{bmatrix} \qquad
+    \stress =
+    \begin{bmatrix}
+        \sigma_{xx} & \sigma_{xy} & 0\\
+        \sigma_{xy} & \sigma_{yy} & 0\\
+        0 & 0 & 0
+    \end{bmatrix}\\[1em]
+    \begin{bmatrix}
+        \sigma_{xx}\\
+        \sigma_{yy}\\
+        \sigma_{xy}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        \alpha & \beta & 0\\
+        \beta & \alpha & 0\\
+        0 & 0 & \mu
+    \end{bmatrix}
+    \begin{bmatrix}
+        \epsilon_{xx}\\
+        \epsilon_{yy}\\
+        2\epsilon_{xy}
+    \end{bmatrix} \qquad 
+    \begin{aligned}
+        \alpha &= E \: \frac{1}{1 - \nu^2}\\
+        \beta &= E \: \frac{\nu}{1 - \nu^2}\\
+    \end{aligned}
+\end{gather*}
+
+\subsection{Axisymétrie}
+En considérant un déplacement $\uu = u(r,z)\mathbf{e}_r + v(r,z)\mathbf{e}_z$,
+et en utilisant le gradient en coordonnées cylindriques, on obtient les 
+relations
+...
 
 
 \end{document}
