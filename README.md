@@ -5,12 +5,12 @@ This work is a Finite Element sovler for 2D isotropic linear elasticty:
 $$\begin{aligned}
 0 &= \nabla \cdot \boldsymbol\sigma(\mathbf{u}) + \mathbf{f}
 && \text{in } \Omega\\
-\boldsymbol\sigma &= 2\mu \boldsymbol\epsilon + \lambda \mathrm{tr}(\boldsymbol\epsilon) \boldsymbol\delta\\
-\boldsymbol \epsilon &= 
-(\nabla \mathbf{u}) + (\nabla \mathbf{u})^* \\
 \mathbf{\mathbf{u}} &= \mathbf{u}_D && \text{on } \partial\Omega_D\\
 \boldsymbol{\sigma}\cdot\mathbf{n} &= \mathbf{t}_N && \text{on } \partial\Omega_N\\
-\boldsymbol{\sigma}\cdot\mathbf{n} + k \mathbf{u} &= \mathbf{t}_R && \text{on } \partial\Omega_R
+\boldsymbol{\sigma}\cdot\mathbf{n} + k \mathbf{u} &= \mathbf{t}_R && \text{on } \partial\Omega_R\\
+\boldsymbol\sigma &= 2\mu \boldsymbol\epsilon + \lambda \mathrm{tr}(\boldsymbol\epsilon) \boldsymbol\delta\\
+\boldsymbol \epsilon &= 
+\frac{1}{2}\big[(\nabla \mathbf{u}) + (\nabla \mathbf{u})^*\big]
 \end{aligned}$$
 
 The deformation problem reduces to a linear system $K u = b$ when the above is discretized with finite elements.
@@ -22,7 +22,7 @@ $$\begin{aligned}
 M \ddot{u} + Ku &= b
 \end{aligned}$$
 
-Using a fourier expansion $U=\Phi \exp(\imath \omega t)$, we find a generalized eigenvalue problem whose solutions are the natural frequencies and shapes of the structure:
+Using a fourier expansion $u=\Phi \exp(\imath \omega t)$, we find a generalized eigenvalue problem whose solutions are the natural frequencies and shapes of the structure:
 $$K \Phi = \omega^2 M \Phi.$$
 
 This solver is capable of solving both deformation and modal analysis problems.

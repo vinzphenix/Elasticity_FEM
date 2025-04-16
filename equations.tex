@@ -2,37 +2,55 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage[margin=2.5cm]{geometry}
+\usepackage{physics}
+\usepackage[hidelinks]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem}
+
+\setlist[itemize]{label=--, itemsep=3pt, topsep=0.5em}
+
+\newcommand{\uu}{\mathbf{u}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\xx}{\mathbf{x}}
+\newcommand{\stress}{\boldsymbol{\sigma}}
+\newcommand{\strain}{\boldsymbol{\epsilon}}
+\newcommand{\shapeu}{\boldsymbol{\varphi}}
+\newcommand{\shapev}{\boldsymbol{\psi}}
+\newcommand{\shapef}{\boldsymbol{\tau}}
+\newcommand{\llangle}{\langle\!\langle}
+\newcommand{\rrangle}{\rangle\!\rangle}
 
 \title{Élasticité linéaire 2D}
 \author{Vincent Degrooff}
 \date{\today}
 
-\newcommand{\uu}{\mathbf{u}}
-\newcommand{\stress}{\boldsymbol{\sigma}}
-\newcommand{\strain}{\boldsymbol{\epsilon}}
-
 \begin{document}
 \maketitle
 
+\tableofcontents
+\newpage
+
 \section{Modèle constitutif}
 
-On s'intéresse à la mécanique du solide dans l'hypothèse de petites déformations.
-Les particules d'un corps soumis à différentes forces de volume et de surface se 
-déplacent d'une position $\mathbf{X}$ à une position $\mathbf{x}(\mathbf{X},t)$. 
-Le déplacement se note $\uu=\mathbf{x}-\mathbf{X}$ et satisfait les equations 
-suivantes :
+On s'intéresse à la mécanique du solide dans l'hypothèse de petites 
+déformations. Les particules matérielles d'un corps soumis à différentes forces 
+de volume et de surface se déplacent d'une position $\mathbf{X}$ à une position 
+$\mathbf{x}(\mathbf{X},t)$. Le déplacement se note $\uu=\mathbf{x}-\mathbf{X}$ 
+et satisfait les equations suivantes :
 
 \begin{align}
     \rho \partial^2_t \uu &= \nabla \cdot \stress + \mathbf{f} 
-        && \text{Conservation de la quantité de mouvement}\\
+        && \text{Conservation de la quantité de mouvement} \label{eq:momentum}\\
     \strain &= \frac{1}{2}\left(\nabla\uu + \nabla^\intercal \uu\right)
-        && \text{Tenseur des déformations infinitésimales}\\
-    \stress &= \mathbf{C} : \strain && \text{Équation constitutive}.
+        && \text{Tenseur des déformations infinitésimales} \label{eq:strain}\\
+    \stress &= \mathbf{C} : \strain && \text{Équation constitutive} 
+        \label{eq:stress}.
 \end{align}
 
 Les tenseurs symétriques de déformation $\strain$ et de contraintes $\stress$, 
-sont liés par une loi constitutive à travers le tenseur de raideur $\mathbf{C}$
-d'ordre $4$. Dans le cas d'un matériau isotrope, on trouve la relation
+sont liés par une loi constitutive à travers le tenseur des rigidités 
+$\mathbf{C}$ d'ordre $4$. Dans le cas d'un matériau isotrope, on trouve la 
+relation
 \begin{align}
     \stress &= 2\mu \strain + \lambda \mathrm{tr}(\strain) \mathbf{I} 
     \label{eq:constitutive}\\
@@ -47,7 +65,6 @@ où
     \item $\nu$ [-], le coefficient de Poisson, quantifie la déformation 
     d'un matériau dans la direction perpendiculaire à l'effort.
 \end{itemize}
-$E$ est le module d'élasticité et $\nu$ le coefficient de Poisson.
 
 Bien que la physique du solide soit évidemment tri-dimensionnelle, il est 
 souvent possible de réduire le problème à deux dimensions, voire une seule. Ici,
@@ -64,17 +81,24 @@ l'influence de la troisième dimension :
 
 
 \subsection{Déformations planes}
-En considérant un déplacement $\uu = u(x,y)\mathbf{e}_1 + v(x,y)\mathbf{e}_2$, 
-dont on peut négliger la dépendance en $z$ et le déplacement dans cette 
-direction, on obtient les tenseurs de déformation, et de contrainte grâce à 
-l'équation constitutive \eqref{eq:constitutive}:
-\begin{gather*}
-    2\strain =
+En considérant un déplacement uniquement planaire $\uu = u(x,y)\mathbf{e}_1 
++ v(x,y)\mathbf{e}_2$, dont on peut négliger la dépendance en $z$, on obtient 
+les tenseurs de déformation, et de contrainte grâce à l'équation constitutive 
+\eqref{eq:constitutive} :
+\begin{gather}
+    \strain =
     \begin{bmatrix}
-        2u_x & u_y + v_x & 0\\
-        u_y + v_x & 2v_y & 0\\
+        \epsilon_{xx} & \epsilon_{xy} & 0\\
+        \epsilon_{xy} & \epsilon_{yy} & 0\\
         0 & 0 & 0
-    \end{bmatrix} \qquad
+    \end{bmatrix} 
+    =
+    \begin{bmatrix}
+        u_x & (u_x+v_y)/2 & 0\\
+        (u_x+v_y)/2 & v_y & 0\\
+        0 & 0 & 0
+    \end{bmatrix} \label{eq:planeStrainStrain}
+    \\[1em]
     \stress =
     \begin{bmatrix}
         \sigma_{xx} & \sigma_{xy} & 0\\
@@ -84,41 +108,55 @@ l'équation constitutive \eqref{eq:constitutive}:
     \begin{bmatrix}
         \sigma_{xx}\\
         \sigma_{yy}\\
-        \sigma_{xy}\\
-        \sigma_{zz}
+        \sigma_{zz}\\
+        \sigma_{xy}
     \end{bmatrix} = 
+    \underbrace{
     \begin{bmatrix}
-        2 \mu + \lambda & \lambda & 0\\
-        \lambda & 2 \mu + \lambda & 0\\
-        0 & 0 & \mu\\
-        \lambda & \lambda & 0
-    \end{bmatrix}
+        \gamma & \lambda & \lambda & \\
+        \lambda & \gamma & \lambda & \\
+        \lambda & \lambda & \gamma & \\
+         &  &  & \mu
+    \end{bmatrix}}_{\mathbf{C}}
     \begin{bmatrix}
         \epsilon_{xx}\\
-        \epsilon_{yy}\\
+        \epsilon_{yy}\\[3pt]
+        0\\
         2\epsilon_{xy}
-    \end{bmatrix}\qquad 
-    \begin{aligned}
-        2\mu + \lambda &= E \: \frac{1 - \nu}{(1 + \nu)(1 - 2\nu)}\\
-        \lambda &= E \: \frac{\nu}{(1 + \nu)(1 - 2\nu)}\\
-        \mu &= E \: \frac{1}{2(1 + \nu)}
-    \end{aligned}
-\end{gather*}
+    \end{bmatrix}\\[1em]
+    \text{où} \quad
+    \gamma \triangleq 2\mu + \lambda = 
+    \frac{E(1 - \nu)}{(1 + \nu)(1 - 2\nu)}.
+\end{gather}
 
 \subsection{Tensions planes}
-En considérant que la pièce est soumise à des forces de traction dans le plan
-$xy$ uniquement, on force la contrainte $\sigma_{zz}$ à être nulle et donc que
-$\epsilon_{zz} = -\frac{\lambda}{2\mu+\lambda} (\epsilon_{xx} + \epsilon_{yy})
-= -\frac{\nu}{1-\nu} (\epsilon_{xx} + \epsilon_{yy})$.
+En considérant que la pièce est soumise à des contraintes dans le plan
+$xy$ uniquement, on force $0=\sigma_{zz}$ :
+\begin{equation}
+    \begin{aligned}
+        \sigma_{zz} &= \lambda \epsilon_{xx}+ \lambda\epsilon_{yy}
+        + (2\mu+\lambda) \epsilon_{zz} = 0\\
+        \iff \epsilon_{zz} &= -\frac{\nu}{1-\nu} (\epsilon_{xx} + \epsilon_{yy})
+    \end{aligned}
+\end{equation}
+
 En considérant à nouveau un déplacement $\uu = u(x,y)\mathbf{e}_1 
-+ v(x,y)\mathbf{e}_2$, on obtient les relations
-\begin{gather*}
-    2\strain =
++ v(x,y)\mathbf{e}_2$, on obtient
+
+\begin{gather}
+    \strain =
     \begin{bmatrix}
-        2u_x & u_y + v_x & 0\\
-        u_y + v_x & 2v_y & 0\\
-        0 & 0 & -\frac{2\nu}{1-\nu} (u_x + v_y)
-    \end{bmatrix} \qquad
+        \epsilon_{xx} & \epsilon_{xy} & 0\\
+        \epsilon_{xy} & \epsilon_{yy} & 0\\
+        0 & 0 & \epsilon_{zz}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        u_x & (u_x+v_y)/2 & 0\\
+        (u_x+v_y)/2 & v_y & 0\\
+        0 & 0 & -\frac{\nu}{1-\nu} (u_x + v_y)
+    \end{bmatrix}\label{eq:planeStressStrain}
+    \\[1em]
     \stress =
     \begin{bmatrix}
         \sigma_{xx} & \sigma_{xy} & 0\\
@@ -130,27 +168,851 @@ En considérant à nouveau un déplacement $\uu = u(x,y)\mathbf{e}_1
         \sigma_{yy}\\
         \sigma_{xy}
     \end{bmatrix} = 
+    \underbrace{
     \begin{bmatrix}
-        \alpha & \beta & 0\\
-        \beta & \alpha & 0\\
-        0 & 0 & \mu
-    \end{bmatrix}
+        \alpha & \beta & \\
+        \beta & \alpha & \\
+         &  & \mu
+    \end{bmatrix}}_{\mathbf{C}}
     \begin{bmatrix}
         \epsilon_{xx}\\
         \epsilon_{yy}\\
         2\epsilon_{xy}
     \end{bmatrix} \qquad 
     \begin{aligned}
-        \alpha &= E \: \frac{1}{1 - \nu^2}\\
-        \beta &= E \: \frac{\nu}{1 - \nu^2}\\
+        \alpha &= \frac{E}{1 - \nu^2}\\
+        \beta &= \frac{E\nu}{1 - \nu^2}\\
     \end{aligned}
-\end{gather*}
+\end{gather}
 
 \subsection{Axisymétrie}
-En considérant un déplacement $\uu = u(r,z)\mathbf{e}_r + v(r,z)\mathbf{e}_z$,
+En considérant un déplacement axisymétrique 
+$\uu = u(r,z)\mathbf{e}_r + v(r,z) \mathbf{e}_{\theta} + w(r,z)\mathbf{e}_z$,
 et en utilisant le gradient en coordonnées cylindriques, on obtient les 
 relations
-...
+\begin{gather}
+    \strain =
+    \begin{bmatrix}
+        \epsilon_{rr} & \epsilon_{r\theta} & \epsilon_{rz}\\
+        0 & \epsilon_{\theta \theta} & 0\\
+        \epsilon_{rz} & 0 & \epsilon_{zz}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        u_r & (-v/r+v_r)/2 & (u_z + w_r)/2\\
+        (-v/r+v_r)/2 & u/r & v_z / 2\\
+        (u_z + w_r)/2 & v_z / 2 & w_z
+    \end{bmatrix}\label{eq:axisymStrain}
+    \\[1em]
+    \stress =
+    \begin{bmatrix}
+        \sigma_{rr} & \sigma_{r\theta} & \sigma_{rz}\\
+        \sigma_{r\theta} & \sigma_{\theta \theta} & \sigma_{\theta z}\\
+        \sigma_{rz} & \sigma_{\theta z} & \sigma_{zz}
+    \end{bmatrix}\\[1em]
+    \begin{bmatrix}
+        \sigma_{rr}\\
+        \sigma_{\theta\theta}\\
+        \sigma_{zz}\\
+        \sigma_{rz}\\
+        \sigma_{r\theta}\\
+        \sigma_{\theta z}
+    \end{bmatrix} = 
+    \underbrace{
+    \begin{bmatrix}
+        \gamma & \lambda & \lambda &  &  & \\
+        \lambda & \gamma & \lambda &  &  & \\
+        \lambda & \lambda & \gamma &  &  & \\
+         &  &  & \mu &  & \\
+         &  &  &  & \mu & \\
+         &  &  &  &  & \mu
+    \end{bmatrix}}_{\mathbf{C}}
+    \begin{bmatrix}
+        \epsilon_{rr}\\
+        \epsilon_{\theta\theta}\\
+        \epsilon_{zz}\\
+        2\epsilon_{rz}\\
+        2\epsilon_{r\theta}\\
+        2\epsilon_{\theta z}
+    \end{bmatrix}.
+\end{gather}
+
+Cependant, la composante tangentielle $v$ du déplacement est 
+supposée nulle dans le code, ce qui nous permet de réduire la matrice 
+$\mathbf{C}$ à ses $4$ premières lignes et colonnes :
+\begin{equation}
+    \begin{bmatrix}
+        \sigma_{rr}\\
+        \sigma_{\theta\theta}\\
+        \sigma_{zz}\\
+        \sigma_{rz}
+    \end{bmatrix} = 
+    \underbrace{
+    \begin{bmatrix}
+        \gamma & \lambda & \lambda &  \\
+        \lambda & \gamma & \lambda &  \\
+        \lambda & \lambda & \gamma &  \\
+         &  &  & \mu 
+    \end{bmatrix}}_{\mathbf{C}}
+    \begin{bmatrix}
+        \epsilon_{rr}\\
+        \epsilon_{\theta\theta}\\
+        \epsilon_{zz}\\
+        2\epsilon_{rz}
+    \end{bmatrix}.
+\end{equation}
+
+\newpage
+\section{Élements finis}
+
+\subsection{Formulation faible}
+Soit un corps $\Omega \subseteq \mathbb{R}^d$ avec une frontière $\Gamma =
+\partial \Omega$ partitionnée en 
+\begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \item $\Gamma_D$ : déplacement imposé (Dirichlet),
+    \item $\Gamma_N$ : contrainte imposée (Neumann),
+    \item $\Gamma_R$ : relation contrainte-déplacement imposée (Robin).
+\end{itemize}
+
+Les contraintes peuvent être imposées sur le vecteur complet, qu’il s’agisse 
+du déplacement ou de la contrainte, ou bien seulement sur une de ses 
+composantes $x$, $y$ voire même selon un direction normale, tangente, 
+ou arbitraire.
+Notonts $\mathcal{M}(\xx)$ l'ensemble des déplacements $\uu(\xx)$ admissibles 
+sur un point de $\Gamma_D$. Dans le cas d'un déplacement normal, on a par 
+exemple
+\begin{equation}
+    \mathcal{M}(\xx) \triangleq \left\{ \uu(\xx) \in \mathbb{R}^d \quad 
+        \text{t.q.} \quad \uu(\xx) \cdot \mathbf{n}(\xx) = 0\right\}.
+\end{equation}
+
+En suivant l'approche de Galerkin, nous cherchons une solution 
+$\uu \in \mathcal{U}(\Omega)$, l'espace des solutions admissibles, 
+telle que la formulation faible soit vérifiée 
+$\forall \vv \in \mathcal{V}(\Omega)$, l’espace des fonctions test :
+\begin{alignat}{4}
+    \mathcal{U} &\triangleq \big\{ 
+        \uu \in [H^1(\Omega)]^d \quad &&\text{t.q.} \quad 
+        \uu(\xx) - \uu_D(\xx) &&\in \mathcal{M}(\xx) 
+        \quad &&\forall \xx \in \Gamma_D
+    \big\},\\
+    \mathcal{V} &\triangleq \big\{ 
+        \vv \in [H^1(\Omega)]^d \quad &&\text{t.q.} \quad 
+        \vv(\xx) &&\in \mathcal{M}(\xx)
+        \quad &&\forall \xx \in \Gamma_D
+    \big\}.
+\end{alignat}
+
+En partant de l'équation de conservation de la quantité de mouvement, on
+obtient :
+\begin{equation}
+    \begin{aligned}
+        \int_\Omega \rho \partial^2_t \uu \cdot \vv \:\dd\Omega 
+        &= 
+        \int_\Omega (\nabla \cdot \stress) \cdot \vv \:\dd\Omega + 
+        \int_\Omega \mathbf{f} \cdot \vv \:\dd\Omega\\
+        &=
+        \int_\Omega \left[\nabla \cdot (\stress \cdot \vv) 
+        - \stress : \nabla \vv \right] \:\dd\Omega + 
+        \int_\Omega \mathbf{f} \cdot \vv \:\dd\Omega\\
+        &=
+        -\int_\Omega \stress : \left[
+            \strain(\vv) + \boldsymbol{\omega}(\vv))\right] \:\dd\Omega +
+        \int_{\Gamma}  \mathbf{n} \cdot \stress \cdot \vv \:\dd\Gamma +
+        \int_\Omega \mathbf{f} \cdot \vv \:\dd\Omega\\
+        &= 
+        -\int_\Omega \stress(\uu) : \strain(\vv) \:\dd\Omega +
+        \int_\Omega \mathbf{f} \cdot \vv \:\dd\Omega +
+        \int_{\Gamma_N \cup \Gamma_R}  \mathbf{t} \cdot \vv \:\dd\Gamma 
+        \qquad \forall \vv \in \mathcal{V}(\Omega).
+    \end{aligned}\label{eq:weak}
+\end{equation}
+
+\subsection{Formulation discrète}
+On fait maintenant l'hypothèse que la solution $\uu$ peut être approchée par 
+une approximation linéaire par morceaux $\uu^h$. Chaque morceau est un élément
+(triangle / quadrilatère) d'un maillage $\mathcal{T}_h$ de $\Omega$, avec 
+$n$ nœuds et $N$ éléments. On note $\phi_{j}(\xx)$ la fonction de
+forme scalaire associée au n\oe ud $j$ et $\uu_j$ la valeur du 
+déplacement au n\oe ud $j$. On peut donc écrire la solution approchée
+\begin{equation}
+    \uu^h(\xx) = \sum_{j=1}^{n} \phi_j(\xx) \uu_j.
+\end{equation}
+
+Étant donné qu'il y a $2n$ degrés de liberté, la base de l'espace discret
+$\mathcal{U}^h$ contient $2n$ éléments :
+\begin{equation}
+    \begin{alignedat}{9}
+    \mathcal{U}^h &=
+    &&\Bigg\{
+        \begin{bmatrix}
+            \phi_1\\
+            0
+        \end{bmatrix}
+        &&,
+        \begin{bmatrix}
+            0\\
+            \phi_1
+        \end{bmatrix}
+        &&,
+        \begin{bmatrix}
+            \phi_2\\
+            0
+        \end{bmatrix}
+        &&,
+        \begin{bmatrix}
+            0\\
+            \phi_2
+        \end{bmatrix}
+        &&,
+        \;\: \ldots\;\:
+        &&,
+        \begin{bmatrix}
+            \phi_n\\
+            0
+        \end{bmatrix}
+        &&,
+        \begin{bmatrix}
+            0\\
+            \phi_n
+        \end{bmatrix}
+    &&\Bigg\}\\ 
+    &=
+    &&\Big\{
+        \;\: \shapeu_{1} &&,
+        \;\: \shapev_{1} &&,
+        \;\: \shapeu_{2} &&,
+        \;\: \shapev_{2} &&,
+        \;\: \ldots \;\: &&,
+        \;\: \shapeu_{n} &&,
+        \;\: \shapev_{n}
+    &&\Big\}\\ 
+    &=
+    &&\Big\{
+        \;\: \shapef_{1}&&,
+        \;\: \shapef_{2}&&,
+        \;\: \shapef_{3}&&,
+        \;\: \shapef_{4}&&,
+        \;\: \ldots \;\: &&,
+        \;\: \shapef_{2n-1}&&,
+        \;\: \shapef_{2n}
+    &&\Big\}
+    \end{alignedat}
+\end{equation}
+
+On peut ainsi réécrire l'approximation de la solution $\uu^h$ comme
+\begin{equation}
+    \uu^h(\xx)
+    = \sum_{j=1}^{n} \shapeu_{j}(\xx) u_j + \shapev_{j}(\xx) v_j    
+    = \sum_{j=1}^{2n} \shapef_j(\xx) \: q_j
+\end{equation}
+
+En remplaçant $\uu$ par $\uu^h$ dans \eqref{eq:weak}, on obtient la
+formulation discrète :
+\begin{equation}
+    \begin{aligned}
+        \sum_{j=1}^{2n} \bigg[&\int_\Omega \rho \shapef_i \cdot \shapef_j \: \dd \Omega \: \bigg]
+        \partial^2_t q_j\\
+        + \sum_{j=1}^{2n} \bigg[&\int_\Omega \strain(\shapef_i) \cdot \mathbf{C} \cdot \strain(\shapef_j)\: \dd \Omega\bigg] q_j\\
+        = &\int_\Omega \shapef_i \cdot \mathbf{f} \: \dd \Omega \: + \int_{\Gamma_N \cup \Gamma_R} \shapef_i \cdot
+        \mathbf{t} \: \dd \Gamma
+    \end{aligned},
+    \label{eq:discrete}
+\end{equation}
+
+que l'on peut réécrire sous la forme matricielle
+\begin{equation}
+    M \ddot{q} + K q = b. \label{eq:matrix}
+\end{equation}
+
+Dans le cas plane, toutes les intégrales de volume présentées ci-dessus sont 
+calculées dans un volume tri-dimensionel : 
+$\int_{\Omega} = \int \int \int \dd x \dd y \dd z$.
+Cependant, aucune intégrande ne dépend de la coordonnée $z$ et on peut donc
+omettre une des intégrales des deux côtés de l'équation.
+
+Dans le cas axisymétrique, les intégrales de volume sont également calculées 
+dans un volume tri-dimensionel :
+$\int_{\Omega} = \int \int \int r \: \dd r \dd \theta \dd z$.
+À nouveau, on peut omettre l'intégrale sur $\theta$ car aucune intégrande ne
+dépend de cette coordonnée.
+
+\subsection{Matrices locales}
+
+Les intégrales définies dans \eqref{eq:discrete} sont nulles presque partout, 
+sauf lorsque $\shapef_i$ et $\shapef_j$ sont non nulles sur le même élément
+$\Omega_e$. Cela se produit lorsque $i$ et $j$ sont des n\oe uds de l'élément
+$e$. On assemble donc l'équation \eqref{eq:matrix} en ajoutant les contributions
+de chaque élément $e$ du maillage $\mathcal{T}_h$.
+
+Sur un élément $\Omega_e$ avec $m=3$ ou $m=4$ n\oe uds, on définit donc les 
+matrices locales $M^e, K^e \in \mathbb{R}^{2m \times 2m}$ qui lient les degrés 
+de liberté $q_i$ et $q_j$ de l'élément $e$, $1\leq i,j\leq m$. 
+À chaque paire de n\oe ud $(i,j)$ correspond donc un bloc 
+$2 \times 2$ $M_{ij}^e$ et $K_{ij}^e$ liant les deux degrés de liberté 
+($u$, $v$) associés à ces n\oe uds.
+\begin{align}
+    M_{ij}^e &= 
+    \begin{bmatrix}
+        \langle \rho \shapeu_i \cdot \shapeu_j \rangle &
+        \langle \rho \shapeu_i \cdot \shapev_j \rangle \\
+        \langle \rho \shapev_i \cdot \shapeu_j \rangle &
+        \langle \rho \shapev_i \cdot \shapev_j \rangle
+    \end{bmatrix}
+    = 
+    \begin{bmatrix}
+        \langle\rho \phi_i \phi_j\rangle & 0\\
+        0 & \langle\rho \phi_i \phi_j\rangle
+    \end{bmatrix} \label{eq:massMatrix}\\
+    K_{ij}^e &= 
+    \begin{bmatrix}
+        \langle\strain(\shapeu_i) \cdot \mathbf{C} \cdot \strain(\shapeu_j)\rangle &
+        \langle\strain(\shapeu_i) \cdot \mathbf{C} \cdot \strain(\shapev_j)\rangle\\
+        \langle\strain(\shapev_i) \cdot \mathbf{C} \cdot \strain(\shapeu_j)\rangle &
+        \langle\strain(\shapev_i) \cdot \mathbf{C} \cdot \strain(\shapev_j)\rangle
+    \end{bmatrix}.\label{eq:stiffMatrix}
+\end{align}
+
+
+% L'expression de la matrice de raideur $K_{ij}^e$ peut être simplifiée grâce aux
+% nombreuses entrées nulles présentes dans le tenseur de rigidité $\mathbf{C}$. 
+
+Dans le code, on utilise la forme générale \eqref{eq:stiffMatrix} pour plus 
+de clarté et de modularité. 
+Cela nous permet de changer le modèle constitutif sans avoir à 
+modifier le code source. En contre-partie, on est forcé de calculer les deux
+produits matrices-vecteurs malgré les quelques entrées nulles.
+
+Pour ce faire, il faut tout de même calculer les expressions de 
+$\strain(\shapef_i)$.
+
+\subsubsection{Cas plane}
+Dans le cas des tensions planes et des déformations planes, le terme 
+$\epsilon_{zz} \sigma_{zz}$ de la double contraction disparait, et on trouve
+grâce à \eqref{eq:planeStrainStrain} que
+\begin{equation}
+    \strain(\shapeu_{i})_{\textrm{vec}} = 
+    \begin{bmatrix}
+        \epsilon_{xx} \\
+        \epsilon_{yy} \\
+        2\epsilon_{xy}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        \phi_{i,x}\\
+        0\\
+        \phi_{i,y}
+    \end{bmatrix} \qquad\qquad
+    \strain(\shapev_{i})_{\textrm{vec}} = 
+    \begin{bmatrix}
+        \epsilon_{xx} \\
+        \epsilon_{yy} \\
+        2\epsilon_{xy}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        0\\
+        \phi_{i,y}\\
+        \phi_{i,x}
+    \end{bmatrix}.
+\end{equation}
+
+Ce qui nous permet d'écrire la matrice de raideur locale pour les déformations
+planes :
+\begin{equation}
+    \begin{aligned}
+        K_{ij}^e &= \int_{\Omega_e}
+        \begin{bmatrix}
+            \phi_{i,x} & 0 & \phi_{i,y}\\
+            0 & \phi_{i,y} & \phi_{i,x}
+        \end{bmatrix} 
+        \begin{bmatrix}
+            \gamma & \lambda & 0\\
+            \lambda & \gamma & 0\\
+            0 & 0 & \mu
+        \end{bmatrix}
+        \begin{bmatrix}
+            \phi_{j,x} & 0\\
+            0 & \phi_{j,y}\\
+            \phi_{j,y} & \phi_{j,x}
+        \end{bmatrix} \dd \Omega_e\\
+        &=
+        \left[
+            \setlength{\arraycolsep}{12pt}
+            \begin{array}{c|c}
+                \langle\phi_{i,x} \:\gamma  \: \phi_{j,x}\rangle 
+                + \langle\phi_{i,y} \: \mu \: \phi_{j,y}\rangle &
+                \langle\phi_{i,x} \:\lambda \: \phi_{j,y}\rangle 
+                + \langle\phi_{i,y} \: \mu \: \phi_{j,x}\rangle\\[1ex]
+                \hline & \\[-1.5ex]
+                \langle\phi_{i,y} \:\lambda \: \phi_{j,x}\rangle 
+                + \langle\phi_{i,x} \: \mu \: \phi_{j,y}\rangle &
+                \langle\phi_{i,y} \:\gamma  \: \phi_{j,y}\rangle 
+                + \langle\phi_{i,x} \: \mu \: \phi_{j,x}\rangle
+            \end{array}
+        \right].
+    \end{aligned} \label{eq:stiffMatrixPlane}
+\end{equation}
+
+Dans le cas des tensions planes, il suffit de remplacer $\gamma$ par $\alpha$ 
+et $\lambda$ par $\beta$ dans \eqref{eq:stiffMatrixPlane}.
+
+\subsubsection{Cas axisymétrique}
+Dans le cas axisymétrique, on doit également prendre en compte la
+composante $\epsilon_{\theta\theta}$ du tenseur de déformation comme mentionné
+à l'équation \eqref{eq:axisymStrain} :
+\begin{equation}
+    \strain(\shapeu_{i})_{\textrm{vec}} = 
+    \begin{bmatrix}
+        \epsilon_{rr} \\
+        \epsilon_{\theta\theta} \\
+        \epsilon_{zz} \\
+        2\epsilon_{rz}
+    \end{bmatrix} =
+    \begin{bmatrix}
+        \phi_{i,r}\\
+        \phi_i / r\\
+        0\\
+        \phi_{i,z}
+    \end{bmatrix} \qquad\qquad
+    \strain(\shapev_{i})_{\textrm{vec}} =
+    \begin{bmatrix}
+        \epsilon_{rr} \\
+        \epsilon_{\theta\theta} \\
+        \epsilon_{zz} \\
+        2\epsilon_{rz}
+    \end{bmatrix} =
+    \begin{bmatrix}
+        0\\
+        0\\
+        \phi_{i,z}\\
+        \phi_{i,r}
+    \end{bmatrix}.
+\end{equation}
+
+Il ne reste plus qu'à calculer la double contraction avec la matrice $C$ 
+et à intégrer en coordonnées cylindriques :
+\begin{equation}
+    \begin{aligned}
+        K_{ij}^e &= \int_{\Omega_e}
+        \begin{bmatrix}
+            \phi_{i,r} & \phi_i/r & 0 & \phi_{i,z}\\
+            0 & 0 & \phi_{i,z} & \phi_{i,r}
+        \end{bmatrix}
+        \begin{bmatrix}
+            \gamma & \lambda & \lambda & 0\\
+            \lambda & \gamma & \lambda & 0\\
+            \lambda & \lambda & \gamma & 0\\
+            0 & 0 & 0 & \mu
+        \end{bmatrix}
+        \begin{bmatrix}
+            \phi_{j,r} & 0\\
+            \phi_{j}/r & 0\\
+            0 & \phi_{j,z}\\
+            \phi_{j,z} & \phi_{j,r}
+        \end{bmatrix} \dd \Omega_e\\
+        &=
+        \left[
+        \setlength{\arraycolsep}{6pt}
+        \begin{array}{c|c}
+            \langle\phi_{i,r} \:r\gamma  \: \phi_{j,r}\rangle + \langle\phi_{i,z} \: r\mu \: \phi_{j,z}\rangle &
+            \langle\phi_{i,r} \:r\lambda \: \phi_{j,z}\rangle + \langle\phi_{i,z} \: r\mu \: \phi_{j,r}\rangle \\
+            {} + \textcolor{Red}{\langle\phi_{i,r} \: \lambda \: \phi_j\rangle} + 
+            \textcolor{Red}{\langle\phi_i \: \lambda \: \phi_{j,r}\rangle} & 
+            {} + \textcolor{Red}{\langle\phi_i \: \lambda \: \phi_{j,z}\rangle}\\
+            \textcolor{Red}{\langle\phi_i \: \gamma/r \: \phi_j\rangle} & \\[1ex]
+            \hline & \\[-1.5ex]
+            \langle\phi_{i,z} \:r\lambda \: \phi_{j,r}\rangle + \langle\phi_{i,r} \: r\mu \: \phi_{j,z}\rangle &
+            \langle\phi_{i,z} \:r\gamma  \: \phi_{j,z}\rangle + \langle\phi_{i,r} \: r\mu \: \phi_{j,r}\rangle\\
+            {} + \textcolor{Red}{\langle\phi_{i,z} \: \lambda \: \phi_j\rangle} & 
+        \end{array}
+        \right].
+    \end{aligned}
+\end{equation}
+
+On remarque que les termes en noir sont similaires au cas plane alors que
+des contributions supplémentaires apparaissent en rouge. Ces contributions sont
+dues à la présence d'une déformation tangentielle $\epsilon_{\theta\theta}$ 
+malgré l'absence de déplacement dans cette direction.
+
+\subsubsection{Terme source local}
+Le terme source est lui bien plus simple à assembler :
+\begin{equation}
+    b_{i}^e = 
+    \begin{bmatrix}
+        \langle\shapeu_i \cdot \mathbf{f}\rangle\\
+        \langle\shapev_i \cdot \mathbf{f}\rangle
+    \end{bmatrix} =
+    \left\{
+        \begin{array}{ll}
+            \begin{bmatrix}
+                \langle\phi_i \phantom{r} f_1\rangle\\
+                \langle\phi_i \phantom{r} f_2\rangle
+            \end{bmatrix} & \text{cas plane}
+            \\[1em]
+            \begin{bmatrix}
+                \langle\phi_i r f_r\rangle\\
+                \langle\phi_i r f_z\rangle
+            \end{bmatrix} & \text{cas axisymétrique}
+        \end{array}
+    \right.
+\end{equation}
+
+
+\subsection{Conditions naturelles de Neumann et Robin}
+Ces conditions sont appelées \textit{naturelles} car elles apparaissent
+naturellement dans la formulation faible. Elles découlent de la contrainte 
+imposée sur la frontière du solide :
+\begin{alignat}{2}
+    \mathbf{n} \cdot \sigma \vert_{\Gamma} &= \mathbf{t} 
+        \qquad& \forall \xx &\in \Gamma_N\\
+    \mathbf{n} \cdot \sigma \vert_{\Gamma} &= \mathbf{t} - 
+        k (\mathbf{u} - \mathbf{u}_0) \qquad& \forall \xx &\in \Gamma_R.
+\end{alignat}
+
+\begin{itemize}
+    \item Dans le cas de la condition de Neumann, on connait la contrainte au 
+    bord.
+    \item Dans le cas de la condition de Robin, on fait l'hypothèse que le bord 
+    est attaché à un ressort de raideur $k$ autour d'un point de 
+    référence $\xx+\mathbf{u}_0$.
+\end{itemize}
+
+On voit donc clairement que la condition de Neumann est un cas particulier de la
+condition de Robin, lorsque $k=0$. Dans la suite, nous allons donc exclusivement 
+nous intéresser à la condition de Robin sous la forme
+\begin{equation}
+    \mathbf{n} \cdot \stress \vert_{\Gamma} = \mathbf{p} - k \mathbf{u}.
+\end{equation}
+
+Le terme de surface de l'équation \eqref{eq:weak} s'écrit alors
+\begin{equation}
+    \int_{\Gamma} (\mathbf{n} \cdot \stress) \cdot \vv \:\dd\Gamma.
+\end{equation}
+
+Pour appliquer cette condition dans la direction normale ou tangentielle 
+uniquement, il faut décomposer chaque vecteur dans ces deux directions. 
+N'importe quelle autre paire de direction orthgonales est également possible.
+
+\begin{equation}
+    \begin{aligned}
+        &\int_{\Gamma} \big[ 
+            (\mathbf{n}\cdot \stress \cdot \mathbf{n}) \mathbf{n}+ 
+            (\mathbf{n}\cdot \stress \cdot \mathbf{t}) \mathbf{t}
+        \big] \cdot \big[
+            (\vv \cdot \mathbf{n}) \mathbf{n} + 
+            (\vv \cdot \mathbf{t}) \mathbf{t}
+        \big] \:\dd\Gamma\\
+        = &\int_{\Gamma} (p_n - k_n \uu \cdot \mathbf{n}) (\shapef \cdot \mathbf{n}) \: \dd \Gamma+
+        \int_{\Gamma} (p_t - k_t \uu \cdot \mathbf{t}) (\shapef \cdot \mathbf{t}) \: \dd \Gamma
+    \end{aligned}
+\end{equation}
+
+La modification à apporter au système $K q = b$ pour une condition de Robin 
+dans la direction $\mathbf{n}$ s'obtient en utilisant successivement 
+$\shapef = \shapeu_i = \phi_i \mathbf{e}_1$ et 
+$\shapef = \shapev_i=\phi_i \mathbf{e}_2$ :
+\begin{alignat}{2}
+    K_{ij} &\leftarrow K_{ij} &&+ 
+    \begin{bmatrix}
+        \llangle k_n n_1 \phi_j \; \phi_i n_1 \rrangle & 
+        \llangle k_n n_2 \phi_j \; \phi_i n_1 \rrangle
+        \\
+        \llangle k_n n_1 \phi_j \: \phi_i n_2 \rrangle & 
+        \llangle k_n n_2 \phi_j \: \phi_i n_2 \rrangle
+        \\
+    \end{bmatrix},\\
+    b_i &\leftarrow \;\; b_i &&+
+    \begin{bmatrix}
+        \llangle p_n \phi_i n_1 \rrangle\\
+        \llangle p_n \phi_i n_2 \rrangle
+    \end{bmatrix}
+\end{alignat}
+
+La modification pour la direction $\mathbf{t}$ s'obtient en 
+remplaçant $\mathbf{n}$, $k_n$ et $p_n$ par $\mathbf{t}$, $k_t$ et $p_t$.
+% Le cas d'une force dirigée selon un des axe se déduit trivialement de
+% l'expression ci-dessus en prenant $\mathbf{n} = \mathbf{e}_1$ ou
+% $\mathbf{n} = \mathbf{e}_2$.
+L'extension au cas axisymétrique est immédiate : il suffit d'ajouter 
+un facteur $r$ dans les intégrales de surface.
+
+
+\subsection{Conditions essentielles de Dirichlet}
+Ces conditions sont appelées \textit{essentielles} car elles doivent être
+imposées à la formulation discrète en modifiant la matrice de raideur.
+
+On souhaite pouvoir imposer à notre solide un déplacement dans une seule 
+direction en lui laissant la liberté de se déplacer dans les autres directions
+(l'autre direction en 2D). Dans le cas d'une pièce qui repose sur une 
+surface plane, on veut par exemple interdire tout déplacement normal à cette 
+surface mais lui laisser la liberté de glisser dessus.
+
+Dans le cas où l'on souhaite imposer le déplacement complet, il suffit de le 
+faire successivement dans chaque direction.
+
+\subsubsection{Dans une direction alignée avec un axe}
+\label{sec:dirichlet-aligned}
+
+Comme précisé précédemment, sur la frontière de Dirichlet $\Gamma_D$, les 
+fonctions tests $\shapef$ dans la direction du déplacement imposé sont nulles.
+Prenons par exemple un déplacement $\bar u$ imposé selon la direction 
+$\mathbf{e}_x$ au n\oe ud $i$. 
+Il faut alors effectuer les opérations suivantes sur le degré de liberté $p$ 
+correspondant
+\begin{equation}
+    \begin{alignedat}{3}
+        K_{pq} &\gets 0 &&\forall q \neq p \quad && \iff\quad \shapeu_i = \mathbf{0}\\
+        K_{pp} &\gets 1\\
+        b_p &\gets \bar u\\
+        K_{qp} &\gets 0 &&\forall q \neq p \\
+        b_{q} &\gets b_q - K_{qp} \bar u \qquad &&\forall q \neq p\\
+    \end{alignedat}
+\end{equation}
+
+Les deux dernières lignes ne sont pas obligatoires, mais elles permettent de
+maintenir la symétrie de la matrice de raideur.
+
+\subsubsection{Dans une direction abitraire}
+Disons que l'on souhaite imposer au n\oe ud $i$ un déplacement $\bar u$ dans 
+une direction $\mathbf{n}$ qui forme avec $\mathbf{t}$ une base orthonormée. 
+Il faut alors modifier à la fois les inconnues du n\oe ud $i$ et les fonctions 
+tests.
+
+Soit $Q_{\textrm{loc}} \in \mathbb{R}^{2\times 2}$, la matrice qui transforme 
+un déplacement normal / tangent vers un déplacement aligné avec $\mathbf{e}_1$ /
+$\mathbf{e}_2$ :
+\begin{equation}
+    \begin{bmatrix}
+        u_1\\
+        u_2
+    \end{bmatrix} = 
+    \underbrace{
+    \begin{bmatrix}
+        n_1 & t_1\\
+        n_2 & t_2
+    \end{bmatrix}}_{Q_{\textrm{loc}}}
+    \begin{bmatrix}
+        u_n \\
+        u_t
+    \end{bmatrix} \quad\iff\quad
+    \begin{bmatrix}
+        u_n\\
+        u_t
+    \end{bmatrix} =
+    \underbrace{
+    \begin{bmatrix}
+        n_1 & n_2\\
+        t_1 & t_2
+    \end{bmatrix}}_{Q_{\textrm{loc}}^{*}}
+    \begin{bmatrix}
+        u_1\\
+        u_2
+    \end{bmatrix}
+\end{equation}
+
+Étendons $Q_{\textrm{loc}}$ à une matrice $Q \in \mathbb{R}^{2n\times 2n}$
+dont seul le bloc $2\times 2$ associé au n\oe ud $i$ diffère de l'identité :
+\begin{equation}
+    q = 
+    \begin{bmatrix}
+        u_1\\
+        v_1\\
+        \vdots\\
+        u_i\\
+        v_i\\
+        \vdots
+    \end{bmatrix} = 
+    Q z \quad\iff\quad
+    z =
+    \begin{bmatrix}
+        u_1\\
+        v_1\\
+        \vdots\\
+        u_n\\
+        v_t\\
+        \vdots
+    \end{bmatrix} = 
+    Q^{*} q \quad\iff\quad
+    Q = 
+    \begin{bmatrix}
+        1 & 0 & & & & \\
+        0 & 1 & & & & \\
+        & & \ddots & & & \\
+        & & & n_1 & t_1 & \\
+        & & & n_2 & t_2 & \\
+        & & & & & \ddots\\
+    \end{bmatrix}
+\end{equation}
+
+Il faut ensuite "tourner" la matrice de raideur $K$ et le vecteur de forçage $b$
+pour les ramener dans le bon repère :
+\begin{align}
+    K q = b \quad\longrightarrow\quad Q^* K Q z &= Q^* b
+\end{align}
+
+On peut ensuite appliquer sur ce nouveau système la procédure présentée à la
+section \ref{sec:dirichlet-aligned} pour imposer le déplacement $\bar u$ au
+n\oe ud $i$ dans la direction $\mathbf{n}$. Enfin, pour passer de la solution
+$z$ à la solution $q$, il faut appliquer la transformation inverse, de part
+et d'autre pour maintenir la symétrie. C'est en pratique ce qui est implémenté
+dans le code source.
+
+Essayons néanmoins de décrire la procédure de manière plus formelle.
+Définissons la matrice $C = I - \mathbf{e}_p \mathbf{e}_p^*$, une 
+matrice de projection dont seule la première entrée du bloc $2\times 2$ 
+associé au n\oe ud $i$ diffère de l'identité.
+
+\begin{alignat}{3}
+    && K x &= b\\
+    &\longrightarrow &\quad Q^* K Q z &= Q^* b  &\quad&\text{Rotation}\\
+    &\longrightarrow &\quad C Q^* K Q z &= C Q^* b &\quad&\text{Annulation}\\
+    &\longrightarrow &\quad (C Q^* K Q C + \mathbf{e}_p \mathbf{e}_p^*) z 
+        &= C Q^* b - C Q^*KQ \mathbf{e}_p \bar u + \mathbf{e}_p \bar u
+        &\quad&\text{Symétrisation}\\
+    &\longrightarrow &\quad Q(C Q^* K Q C + \mathbf{e}_p \mathbf{e}_p^*) Q^*x 
+        &= Q C Q^* b - Q C Q^*KQ \mathbf{e}_p \bar u + Q \mathbf{e}_p \bar u
+        &\quad&\text{Rotation'}
+\end{alignat}
+
+Le système ci-dessus peut être habilement réécrit comme
+\begin{gather}
+    (N + T K T) x = T b - T K \tilde n \bar u + \tilde n \bar u, \qquad 
+    \text{avec }\\[1em]
+    \begin{array}{c|c|c}
+        T \triangleq Q C Q^* = &
+        N \triangleq Q \mathbf{e}_p \mathbf{e}_p^* Q^* = &
+        \tilde n \triangleq Q \mathbf{e}_p\\
+        \begin{bmatrix}
+            1 & 0 &        &        &        & \\
+            0 & 1 &        &        &        & \\
+              &   & \ddots &        &        & \\
+              &   &        & t_1^2  & \:t_1\:t_2 & \\
+              &   &        & \:t_1\:t_2 & t_2^2  & \\
+              &   &        &        &        & \ddots
+        \end{bmatrix}\quad&
+        \begin{bmatrix}
+            0 & 0 &        &        &        & \\
+            0 & 0 &        &        &        & \\
+              &   & \ddots &        &        & \\
+              &   &        & n_1^2  & n_1n_2 & \\
+              &   &        & n_1n_2 & n_2^2  & \\
+              &   &        &        &        & \ddots
+        \end{bmatrix}\quad&
+        =\begin{bmatrix}
+            0\\
+            0\\
+            \vdots\\
+            n_1\\
+            n_2\\
+            \vdots
+        \end{bmatrix}.
+    \end{array}
+\end{gather}
+
+On constate fort heureusement qu'avec $n_1=1=-t_2$ et $n_2=0=t_1$, on retombe sur 
+le cas particulier de la section \ref{sec:dirichlet-aligned}.
+
+\subsection{Calcul des contraintes}
+Lorsque le système est résolu, on obtient le déplacement $\mathbf{u}_j$ 
+pour chaque n\oe ud $j$. On peut ensuite calculer aux points d'intégration
+les déformations grâce à la relation \eqref{eq:strain} et enfin les contraintes 
+grâce au modèle constitutif \eqref{eq:stress}. 
+
+Étant donné qu'on utilise des éléments linéaires triangulaires ($\mathcal{P}_1$)
+ou quadrangulaires ($\mathcal{Q}_1$), les déformations $\strain^h$ sont 
+discontinues par éléments. Par conséquent les contraintes $\stress^h$ le sont
+également.
+Il est toutefois possible de reconstruire une approximation $\stress^c$ 
+continue aux n\oe uds du maillage :
+\begin{equation}
+    \stress^c(\xx) = \sum_{j=1}^{n} \phi_j(\xx) \stress_j^h.
+\end{equation}
+
+Au moins deux méthodes sont possibles :
+\begin{itemize}
+    \item Moyenner autour de chaque n\oe ud les contraintes des éléments 
+    adjacents, ou bien
+    \item Minimiser l'intégrale du carré de la différence entre les contraintes
+    discontinues $\stress^h$ et les contraintes continues $\stress^c$.
+\end{itemize}
+
+\subsubsection{Moyenne pondérée}
+Cette première méthode a l'avantage d'être rapide, mais fournit de moins bons
+résultats. En notant $\stress_j^c$ la valeur nodale du champ de contrainte
+et $D_j$ l'ensemble des éléments adjacents au n\oe ud $j$, on a alors
+\begin{equation}
+    \stress^c_j = \frac{\displaystyle\int_{D_j} \phi_j \stress^h \dd \xx}{
+        \displaystyle\int_{D_j} \phi_j \dd \xx}.
+\end{equation}
+
+\subsubsection{Moindre carrés}
+Cette seconde méthode fournit de meilleurs résultats mais se révèle plus 
+coûteuse étant donné qu'il faut résoudre un système linéaire.
+On cherche ici à minimiser l'intégrale
+\begin{equation}
+    J(\sigma_1, \dots, \sigma_n) = 
+        \int_{\Omega} \Big(
+            \sigma^c\big(\sigma_1,\dots, \sigma_n\big) - \sigma^h
+        \Big)^2 \dd \Omega
+\end{equation}
+pour chaque composante $\sigma^c$ et $\sigma^h$ du tenseur de contrainte.
+
+On trouve les paramètres $\sigma_i$ du minimiseur $\sigma^c$ grâce à la 
+condition de stationnarité
+\begin{equation}
+    \begin{alignedat}{2}
+        &&\partial_{\sigma_i} J =
+        2\int_{\Omega} \Big(
+            \sigma^c\big(\sigma_1,\dots, \sigma_n\big) - \sigma^h
+            \Big) \partial_{\sigma_i} \sigma^c \:\dd \Omega &= 0\\
+        &\implies& \int_{\Omega} \Big(\sum_j \phi_j \sigma_j - \sigma^h\Big) \phi_i \:\dd \Omega &= 0\\
+        &\implies& \sum_j \left[\int_{\Omega} \big(\phi_j \cdot \phi_i \big) \:\dd \Omega \right] \sigma_j &=
+        \int_{\Omega} \big(\sigma^h \cdot \phi_i\big) \:\dd \Omega
+    \end{alignedat}
+\end{equation}
+où l'on utilise la notation d'Einstein pour les indices. On retrouve
+une matrice de masse similaire à celle définie dans \eqref{eq:massMatrix}, 
+hormis que celle-ci ne porte que sur un champ scalaire. 
+L'opération $M \sigma = b$ présentée ci-dessus n'est en fait qu'une
+projection de la contrainte $\stress^h$ sur l'espace $\mathcal{U}^h$.
+
+
+\subsection{Analyse modale}
+En faisant l'hypothèse qu'on cherche une solution harmonique 
+$\uu = \Phi e^{\imath \omega t}$, on peut réécrire l'équation 
+\eqref{eq:matrix} sans forcage $b$ sous la forme d'un problème aux valeurs
+propres généralisé :
+\begin{equation}
+    K \Phi = \omega^2 M \Phi,
+\end{equation}
+dont les solutions non-triviales $(\omega_i^2, \Phi_i)$ satisfont
+\begin{align}
+    \Phi_i K \Phi_j &= \omega_i^2 \delta_{ij} \quad\text{et}\\
+    \Phi_i M \Phi_j &= \delta_{ij}.
+\end{align}
+
+C'est à dire que les vecteurs propres $\Phi_i$ sont orthonormés à travers la 
+matrice de masse.
+
+% Pour plus de clarté, les détails du raisonnement \eqref{eq:weak} sont listés
+% ci-dessous :
+% \begin{itemize}
+%     \item Multiplication de l'équation de conservation de la quantité de 
+%     mouvement par une fonction test $\vv$ et intégration sur le domaine $\Omega$.
+%     \item Intégration par partie du terme $\nabla \cdot \stress \cdot \vv$.
+%     \item Application du théorème de la divergence pour obtenir le terme de
+%     surface, qui s'annule sur la frontière de Dirichlet $\Gamma_D$.
+%     \item Décomposition du gradient de déplacement $\nabla \vv$ en partie 
+%     symétrique $\strain$ et antisymétrique $\boldsymbol{\omega}$ qui disparait 
+%     lors de la double contraction avec le tenseur de contrainte $\stress$.
+% \end{itemize}
+
+
+\section{Résolution numérique}
+
+\subsection{Système linéaire}
+
+\subsection{Mode propre}
 
 
 \end{document}
