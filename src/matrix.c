@@ -641,7 +641,7 @@ int PCG(
         rz = cblas_ddot(n, r, 1, z, 1);
         beta *= rz;
         cblas_dscal(n, beta, d, 1);
-        cblas_daxpy(n, 1, z, 1, d, 1);
+        cblas_daxpy(n, 1.0, z, 1, d, 1);
         it++;
     }
 

@@ -56,6 +56,7 @@ void solve_deformation(FE_Model *model) {
     add_bulk_source(model, rhs);
     enforce_bd_conditions(model, rhs);
     // write_band_sym(model->K, rhs, "K.txt");
+    
     clock_gettime(CLOCK_MONOTONIC, &t2);
     printf("%30s : %6.3lf s\n", "Boundaries", TIMESP(t1, t2));
 
@@ -184,7 +185,7 @@ int main(int argc, char *argv[]) {
     // Simulation parameters
     const ElementType e_type = TRI;
     const Renumbering renum = RENUM_RCMK;
-    const LinearSolver solver = Band;
+    const LinearSolver solver = CG_NoPrec;
 
     FE_Model *model = create_FE_Model(argv[1], e_type, renum, solver);
     display_info(model, 1, NULL);

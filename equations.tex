@@ -5,6 +5,7 @@
 \usepackage{physics}
 \usepackage[hidelinks]{hyperref}
 \usepackage[dvipsnames]{xcolor}
+\usepackage[indent=12pt]{parskip}
 \usepackage{enumitem}
 
 \setlist[itemize]{label=--, itemsep=3pt, topsep=0.5em}
@@ -967,19 +968,19 @@ condition de stationnarité
             \Big) \partial_{\sigma_i} \sigma^c \:\dd \Omega &= 0\\
         &\implies& \int_{\Omega} \Big(\sum_j \phi_j \sigma_j - \sigma^h\Big) \phi_i \:\dd \Omega &= 0\\
         &\implies& \sum_j \left[\int_{\Omega} \big(\phi_j \cdot \phi_i \big) \:\dd \Omega \right] \sigma_j &=
-        \int_{\Omega} \big(\sigma^h \cdot \phi_i\big) \:\dd \Omega
+        \int_{\Omega} \big(\sigma^h \cdot \phi_i\big) \:\dd \Omega \quad \forall i=1\dots n.
     \end{alignedat}
 \end{equation}
-où l'on utilise la notation d'Einstein pour les indices. On retrouve
+
+On retrouve
 une matrice de masse similaire à celle définie dans \eqref{eq:massMatrix}, 
 hormis que celle-ci ne porte que sur un champ scalaire. 
 L'opération $M \sigma = b$ présentée ci-dessus n'est en fait qu'une
 projection de la contrainte $\stress^h$ sur l'espace $\mathcal{U}^h$.
 
-
 \subsection{Analyse modale}
 En faisant l'hypothèse qu'on cherche une solution harmonique 
-$\uu = \Phi e^{\imath \omega t}$, on peut réécrire l'équation 
+$\uu = \Phi e^{\imath \omega t}$, on peut réécrire l'équation matricielle
 \eqref{eq:matrix} sans forcage $b$ sous la forme d'un problème aux valeurs
 propres généralisé :
 \begin{equation}
@@ -991,28 +992,167 @@ dont les solutions non-triviales $(\omega_i^2, \Phi_i)$ satisfont
     \Phi_i M \Phi_j &= \delta_{ij}.
 \end{align}
 
-C'est à dire que les vecteurs propres $\Phi_i$ sont orthonormés à travers la 
-matrice de masse.
+C'est à dire que les vecteurs propres $\Phi_i$ ne sont pas orthonormés au sens
+classique mais à travers la matrice de masse.
+Les fréquences naturelles du solide sont simplement obtenues par 
+$f_i = \omega_i / 2\pi$ [Hz].
 
-% Pour plus de clarté, les détails du raisonnement \eqref{eq:weak} sont listés
-% ci-dessous :
-% \begin{itemize}
-%     \item Multiplication de l'équation de conservation de la quantité de 
-%     mouvement par une fonction test $\vv$ et intégration sur le domaine $\Omega$.
-%     \item Intégration par partie du terme $\nabla \cdot \stress \cdot \vv$.
-%     \item Application du théorème de la divergence pour obtenir le terme de
-%     surface, qui s'annule sur la frontière de Dirichlet $\Gamma_D$.
-%     \item Décomposition du gradient de déplacement $\nabla \vv$ en partie 
-%     symétrique $\strain$ et antisymétrique $\boldsymbol{\omega}$ qui disparait 
-%     lors de la double contraction avec le tenseur de contrainte $\stress$.
-% \end{itemize}
-
-
+\newpage
 \section{Résolution numérique}
 
 \subsection{Système linéaire}
+Comme dans n'importe quel problème d'élément finis, la matrice de raideur 
+du système $Kx=b$ \eqref{eq:matrix} est particulièrement creuse. En effet,
+chaque degré de liberté $q_i$ communique avec $q_j$ uniquement si un élément
+les contient tous les deux. Le nombre d'entrées non-nulles (\texttt{nnz}) 
+par ligne est donc en moyenne de 
+\begin{itemize}
+    \item $2\cdot (6+1) = 14$ pour une triangulation
+    \item $2\cdot (8+1) = 18$ pour une quadrangulation
+\end{itemize}
+
+Deux types de solveurs sont donc proposés pour tirer profit de cet
+aspect creux :
+\begin{enumerate}
+    \item solveur direct où $K$ est stocké sous format bande,
+    \item solveur itératif où $K$ est stocké sous format CSR.
+\end{enumerate}
+
+\subsubsection{Solveur direct -- LDL'}
+Il s'agit ici simplement d'une factorisation de Cholesky de la matrice de
+raideur $K$ :
+\begin{equation}
+    K = L D L^T
+\end{equation}
+où $L$ est une matrice triangulaire inférieure de diagonale unité et 
+$D$ est une matrice diagonale. 
+
+Cette factorisation, réalisée \textit{in-place}, 
+génère de nombreuses entrées non-nulles par rapport à la
+matrice de raideur d'origine. Il est possible de réduire ce \textit{fill-in} 
+en permutant les lignes et colonnes de $K$. 
+On distingue généralement deux grandes familles de stratégies, selon qu’elles 
+visent à réduire la bande (et indirectement le \textit{fill-in}), ou qu’elles 
+ciblent directement la réduction du \textit{fill-in} lors de l’élimination.
+
+\begin{itemize}
+    \item \textbf{Réduction de bande}. Ces méthodes, comme le tri des n\oe uds 
+    par coordonnées ou l'algorithme de \textit{Reverse Cuthill-McKee} (RCMK) 
+    basé sur un parcours en largeur du maillage (\textit{breadth-first search}), 
+    visent à concentrer les entrées non-nulles autour de la diagonale. 
+    RCMK, bien qu'un peu plus complexe à implémenter, offre de bien meilleurs 
+    résultats dès que la géométrie n'est plus triviale.
+    \item \textbf{Réduction directe du \textit{fill-in}}. Les méthodes comme 
+    \textit{Minimum Degree} ou \textit{Nested Dissection} minimisent plus 
+    efficacement les nouvelles entrées créées, mais requièrent des structures 
+    de données plus sophistiquées. Le \textit{fill-in} se répartit alors sur 
+    l’ensemble de la matrice.
+\end{itemize}
+
+Dans le code, l'algorithme de RCMK a été choisi puisqu'il offre un bon compromis
+entre simplicité d'implémentation et efficacité.
+
+Lorsque la matrice $K$ a une bande de largeur $b$, cette factorisation 
+s'effectue en $\mathcal{O}(nb^2)$. Le système $Kx = LDL^T x =b$ est alors 
+résolu en trois étapes :
+\begin{equation}
+    L z = b \quad\longrightarrow\quad 
+    D y = z \quad\longrightarrow\quad 
+    L^T x = y
+\end{equation}
+
+\subsubsection{Solveur itératif -- Gradient conjugué}
+
+Le solveur itératif implémenté est l'algorithme du gradient conjugué (CG),
+concu pour résoudre des systèmes symétriques définis positifs. À la différence 
+des méthodes directes, cet algorithme démarre d'une solution initiale $x_0$ et
+converge progressivement vers la solution exacte $x^*$ en plusieurs itérations.
+Il est donc particulièrement adapté aux systèmes de grande taille, où les 
+méthodes directes deviennent trop coûteuses en temps et en mémoire.
+
+Le coût d'une itération de l'algorithme CG est globalement dominé par le
+produit matrice-vecteur $Kx_i$. Il est donc essentiel de choisir une
+représentation de $K$ qui permette de calculer efficacement ce
+produit : le format \texttt{CSR} (\textit{Compressed Sparse Row}). 
+Le coût de ce produit est alors seulement de $\mathcal{O}(\text{nnz})$.
+
+Il est possible de montrer que l'erreur $e_i = x_i - x^*$ à l'itération $i$ 
+est bornée par l'erreur initiale $e_0$ :
+\begin{equation}
+    \|e_i\|_K \leq 2 \left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa}+1}\right)^i \|e_0\|_K,
+\end{equation}
+
+où $\kappa$ est le nombre de condition de la matrice $K$, défini comme 
+\begin{equation}
+    \kappa(K) = \frac{\lambda_{\max}(K)}{\lambda_{\min}(K)}.
+\end{equation}
+
+On peut donc obtenir le nombre d'itérations $N$ nécessaires pour borner 
+l'erreur par $\epsilon$ :
+\begin{equation}
+    \begin{aligned}
+        \|e_N\|_K &\leq \epsilon\\
+        2 \left(\frac{\sqrt{\kappa} - 1}{\sqrt{\kappa}+1}\right)^N \|e_0\|_K &\leq \epsilon\\
+        \left(1 - \frac{2}{\sqrt{\kappa}}\right)^N &\leq \frac{\epsilon}{2\|e_0\|_K}\\
+        \left(1 - \frac{2N/\sqrt{\kappa}}{N}\right)^N &\leq \frac{\epsilon}{2\|e_0\|_K}\\
+        \exp\left(-\frac{2N}{\sqrt{\kappa}}\right) &\leq \frac{\epsilon}{2\|e_0\|_K}\\
+        \frac{1}{2} \sqrt{\kappa(K)} \ln\left(2\|e_0\|_K / \epsilon\right) &\leq N.
+    \end{aligned}
+\end{equation}
+
+Quelle que soit la dimension, le nombre de condition $\kappa$ augmente avec 
+$\sim \mathcal{O}(h^{-2})$, où $h$ est la taille de maille.
+À partir d'un certain niveau de raffinement, le nombre d'itérations $N$ 
+devient prohibitif. Il devient donc nécessaire d'utiliser un précondtionneur 
+pour réduire le $\kappa$.
+
+L'idée est de transformer le système $Kx = b$ en un système équivalent 
+\begin{equation}
+    M^{-1} K x = M^{-1} b,
+\end{equation}
+qui doit présenter deux propriétés :
+\begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \item $\kappa(M^{-1} K)$ doit être plus faible que celui
+    de $K$,
+    \item $M$ doit être facilement inversible.
+\end{itemize}
+
+Pour utiliser CG, il faut que la matrice soit SDP, or $M^{-1} K$ ne l'est pas 
+en général. Il faut donc supposer que $M^{-1}=EE^T$ avec $E$ non singulière.
+On peut alors écrire
+\begin{equation}
+    \begin{aligned}
+        M^{-1} K x &= M^{-1} b\\
+        E^T K x &= E^T b\\
+        (E^T K E) (E^{-1} x) &= E^T b\\
+        \hat K \hat x &= \hat b.
+    \end{aligned}
+\end{equation}
+
+Avec un peu d'algèbre, l'algorithme du gradient conjugué 
+préconditionné (PCG) se ramène à un CG augmenté d'une résolution de 
+système linéaire $Mz=r$ à chaque itération. 
+
+Dans le code, plusieurs préconditionneurs sont implémentés : 
+\begin{itemize}
+    \item \textbf{Jacobi} : $M = D$ avec $D$ la diagonale de $K$,
+    \item \textbf{SSOR} : $M = (D + L) D^{-1} (D + L)^T$ avec $L$ la matrice
+    triangulaire inférieure de $K$,
+    \item \textbf{ILU(0)} : $M=L D L^T$ avec $L$ la factorisation incomplète
+    de Cholesky où l'on n'autorise aucun \textit{fill-in},
+    \item \textbf{ILU(1)} : $M=L D L^T$ avec $L$ la factorisation incomplète
+    de Cholesky où l'on n'autorise qu'un degré de \textit{fill-in}.
+\end{itemize}
+
 
 \subsection{Mode propre}
 
+\subsection{Adimensionalisation}
+
+\section{Validation}
+\subsection{Poutre encastrée}
+
+\subsection{Cylindre creux}
 
 \end{document}

@@ -504,15 +504,15 @@ void apply_dirichlet(
         i_bound = (numxy < K->k) ? 0 : numxy - K->k;
         for (i = i_bound; i < numxy; i++) {
             rhs[i] -= K->a[numxy][i] * val;
-            // K->a[numxy][i] = 0.;
+            K->a[numxy][i] = 0.;
         }
         // Zero out col associated to dof "numxy"
         i_bound = MIN(numxy + K->k + 1, K->n);
         for (i = numxy + 1; i < i_bound; i++) {
             rhs[i] -= K->a[i][numxy] * val;
-            // K->a[i][numxy] = 0.;
+            K->a[i][numxy] = 0.;
         }
-        K->a[numxy][numxy] = 1e14;
+        K->a[numxy][numxy] = 1.;
         rhs[numxy] = val;
         if (kind == 'n' || kind == 't')
             project_system(num, K, rhs, nx[j], ny[j]);
