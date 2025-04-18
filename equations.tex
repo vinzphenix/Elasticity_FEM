@@ -7,6 +7,8 @@
 \usepackage[dvipsnames]{xcolor}
 \usepackage[indent=12pt]{parskip}
 \usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode} %[noend]
 
 \setlist[itemize]{label=--, itemsep=3pt, topsep=0.5em}
 
@@ -984,7 +986,7 @@ $\uu = \Phi e^{\imath \omega t}$, on peut réécrire l'équation matricielle
 \eqref{eq:matrix} sans forcage $b$ sous la forme d'un problème aux valeurs
 propres généralisé :
 \begin{equation}
-    K \Phi = \omega^2 M \Phi,
+    K \Phi = \omega^2 M \Phi, \label{eq:eigenproblem}
 \end{equation}
 dont les solutions non-triviales $(\omega_i^2, \Phi_i)$ satisfont
 \begin{align}
@@ -1140,13 +1142,128 @@ Dans le code, plusieurs préconditionneurs sont implémentés :
     \item \textbf{SSOR} : $M = (D + L) D^{-1} (D + L)^T$ avec $L$ la matrice
     triangulaire inférieure de $K$,
     \item \textbf{ILU(0)} : $M=L D L^T$ avec $L$ la factorisation incomplète
-    de Cholesky où l'on n'autorise aucun \textit{fill-in},
+    de Cholesky de $K$ où l'on n'autorise aucun \textit{fill-in},
     \item \textbf{ILU(1)} : $M=L D L^T$ avec $L$ la factorisation incomplète
-    de Cholesky où l'on n'autorise qu'un degré de \textit{fill-in}.
+    de Cholesky de $K$ où l'on n'autorise qu'un degré de \textit{fill-in}.
 \end{itemize}
 
-
 \subsection{Mode propre}
+Pour calculer les modes propres du système, il faut résoudre le problème aux
+valeurs propres généralisé \eqref{eq:eigenproblem} $K \Phi = \omega^2 M \Phi$.
+Il existe plusieurs méthodes pour résoudre ce type de problème. Vu qu'on ne 
+cherche que les quelques modes de faible fréquence, la méthode la plus adaptée 
+est l'itération inverse combinée à une déflation.
+
+On pourrait être tentés de d'inverser le $K$ ou $M$ pour retomber sur un
+problème aux valeurs propres standard. Cependant, ces matrices sont
+généralement très grandes et creuses, et leur inversion est donc prohibitive.
+Pour obtenir ces fameux modes, il est en fait possible de réaliser une 
+itération de la puissance sur $K^{-1} M$ sans avoir à l'inverser :
+\begin{equation}
+    x_{k} \gets K^{-1} M x_{k-1} \iff
+    \left\{\begin{aligned}
+        z_{k} &\gets M x_{k-1}\\
+        x_{k} &\gets \textrm{solve}(K, z_{k})\\
+        \lambda_{k} &\gets \frac{x_{k}^* \:K\: x_{k}}{x_{k}^* \:M\: x_{k}}
+    \end{aligned}\right\} .
+\end{equation}
+
+Il faut donc factoriser $K$ \textbf{une seule fois} au début de l'algorithme, 
+en $\mathcal{O}(nb^2)$. 
+À chaque itération, il faut ensuite seulement calculer un produit 
+matrice-vecteur et résoudre un système linéaire, chaqun en $\mathcal{O}(n b)$.
+
+\subsubsection{Déflation}
+Nous souhaitons trouver les $N$ premiers modes propres du système. Or 
+l'itération de la puissance converge uniquement vers le mode propre $\Phi_i$ 
+associé à
+\begin{equation}
+    \lambda_{\max}(K^{-1} M)=\lambda_{\min}(K M^{-1})
+\end{equation}
+
+On peut le montrer en décomposant l'itéré initial $x_0$ dans la base propre de 
+$K M^{-1}$. On observe alors que l'itération inverse converge vers le mode 
+propre associé à la valeur propre minimale $\lambda_1 = \omega_1^2$ :
+\begin{alignat}{2}
+    & \qquad & x_0 &= \sum_{j=1}^{n} \alpha_j \Phi_j \qquad \text{avec }
+    \lambda_1 < \lambda_2 < \dots < \lambda_{n-1} < \lambda_n\\
+    &\implies &\qquad x_{k} &= (K^{-1} M) x_{0} = \sum_{j=1}^{n} \alpha_j (K^{-1} M)^{k} \Phi_j
+        = \sum_{j=1}^{n} \alpha_j \frac{1}{\lambda_j^k} \Phi_j\\
+    &\implies &\qquad x_{k} &\to \alpha_1 \lambda_1^{-k} \Phi_1
+        \qquad \text{si } \alpha_1 \neq 0\\
+\end{alignat}
+
+On constate donc qu'il est possible de trouver le second mode propre si l'itéré
+initial $x_0$ ne contient pas de composante $\Phi_1$. Lorsque ce premier mode
+propre est trouvé  il faut donc le "supprimer" d'un itéré $w$ pour 
+converger vers le second mode propre. Le coefficient $\alpha_1$, nécessaire 
+pour y parvenir est obtenu grâce à une projection $M$-orthogonale :
+\begin{equation}
+    w = \sum_{j=1}^{n} \alpha_j \Phi_j \quad\implies\quad
+    \Phi_i^* M w = \sum_{j=1}^{n} \alpha_j \Phi_i^* M \Phi_j
+    = \sum_{j=1}^{n} \alpha_j \delta_{ij} = \alpha_i
+\end{equation}
+où l'on suppose que $\Phi_i$ est normalisé au sens de $M$, i.e. 
+$\Phi_i^* M \Phi_i = 1$. 
+Lorsque l'on connait les $m$ premiers modes propres, l'itéré initial pour 
+trouver le mode propre $(m+1)$ est donc
+\begin{equation}
+    x_0^{(m+1)} = w - \sum_{i=1}^{m}\alpha_i \Phi_i 
+    = \left(I - \sum_{i=1}^m \Phi_i {\Phi_i}^* M\right) w.
+\end{equation}
+
+En pratique, à cause des erreurs d'arrondis, les modes déflatés $\Phi_i$ avec 
+$i\leq m$ ont tendance à réapparaître dans les itérés suivants $x_k$. Il
+faut donc répéter la projection $M$-orthogonale à chaque itération.
+
+\begin{algorithm}[H]
+    \caption{Itération inverse avec déflation pour un problème généralisé $K\Phi = \omega^2 M \Phi$}
+    \begin{algorithmic}[1]
+    \State \textbf{Input:} Matrices $K$, $M$, number of modes $N$
+    \State Factorize $K$ into $L D L^T$
+    \For{$i = 1$ to $N$} \Comment{Modes}
+        \State $ x_0 \gets $ random vector
+        \For{$k = 1,2,\dots$} \Comment{Itérations}
+            \State $z_k \gets M x_{k-1}$
+            \State $x_k \gets \textrm{solve}(K, z_k)$
+            \For{$j = 1$ to $i-1$} \Comment{Orthogonalisation}
+                \State $\alpha \gets \Phi_j^* M x_k$
+                \State $x_k \gets x_k - \alpha \Phi_j$ \Comment{Gram-Schmidt modifié}
+            \EndFor
+            \State $x_{k} \gets x / \sqrt{{x_k}^* M x_k}$ \Comment{Normalisation}
+            \State $\nu_{k} \gets x_k^* K x_k$
+        \EndFor
+        \State $\Phi_i \gets x_k$ \Comment{Mode propre}
+        \State $\lambda_i \gets \nu_k$ \Comment{Valeur propre}
+        \State \textbf{Return:} $\Phi_i$, $\lambda_i$
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+
+\subsubsection{Shift}
+À l'instar de l'itération inverse classique, il est possible de \textit{shifter}
+le spectre du système pour trouver le mode propre autout d'une fréquence cible.
+En effet, $K-\mu M$ possède les mêmes vecteurs propres $\Phi_i$ que $K$ mais 
+avec des valeurs propres décalées $\lambda_i - \mu$ :
+\begin{equation}
+    (K - \mu M) \Phi = K \Phi - \mu M \Phi = (\lambda - \mu) M \Phi
+\end{equation}
+
+Si $\mu$ est proche d'une valeur propre $\lambda_i$, alors le système inverse 
+$(K - \mu M)^{-1} M $ possède une valeur propre 
+$(\lambda_i - \mu)^{-1} \gg (\lambda_j - \mu)^{-1}$ pour $j \neq i$. 
+L'itération inverse
+\begin{equation}
+    x_{k+1} \gets (K - \mu M)^{-1} M x_k \iff
+    \left\{\begin{aligned}
+        z_{k} &\gets M x_k\\
+        (K - \mu M) x_{k+1} &\gets z_k
+    \end{aligned}\right\}
+\end{equation}
+converge donc très vite vers le mode propre $\Phi_i$ associé à cette 
+fréquence propre $\lambda_i=\omega_i^2$.
+
 
 \subsection{Adimensionalisation}
 
