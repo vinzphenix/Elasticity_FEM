@@ -85,6 +85,8 @@ void solve_deformation(FE_Model *model) {
     free(data_forces);
     free(rhs);
     free(sol);
+    free(bounds);
+    free(views);
 }
 
 void find_eigenmodes(FE_Model *model, int nb) {
@@ -134,6 +136,7 @@ void find_eigenmodes(FE_Model *model, int nb) {
     gmshFltkFinalize(&ierr);
     free(forces);
     free(eigw);
+    free(rhs);
     free(bounds);
     free(views);
 }
@@ -185,7 +188,7 @@ int main(int argc, char *argv[]) {
     // Simulation parameters
     const ElementType e_type = TRI;
     const Renumbering renum = RENUM_RCMK;
-    const LinearSolver solver = CG_NoPrec;
+    const LinearSolver solver = Band;
 
     FE_Model *model = create_FE_Model(argv[1], e_type, renum, solver);
     display_info(model, 1, NULL);

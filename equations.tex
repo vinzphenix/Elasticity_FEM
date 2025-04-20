@@ -9,7 +9,22 @@
 \usepackage{enumitem}
 \usepackage{algorithm}
 \usepackage{algpseudocode} %[noend]
+\usepackage{titling}
+\usepackage[
+    font=small, skip=6pt, labelfont=bf, labelsep=period, 
+    format=hang, margin={5pt, 6pt}
+]{caption}
+    
+\usepackage{graphicx}
+% \usepackage{svg}
+    
+\usepackage{tikz}
+\usetikzlibrary{
+    patterns, arrows.meta
+}
 
+\setcounter{tocdepth}{2}
+% \setlength{\droptitle}{-3em}
 \setlist[itemize]{label=--, itemsep=3pt, topsep=0.5em}
 
 \newcommand{\uu}{\mathbf{u}}
@@ -995,9 +1010,32 @@ dont les solutions non-triviales $(\omega_i^2, \Phi_i)$ satisfont
 \end{align}
 
 C'est à dire que les vecteurs propres $\Phi_i$ ne sont pas orthonormés au sens
-classique mais à travers la matrice de masse.
+classique mais à travers la matrice de masse. Il est possible de le démontrer
+grâce à la symétrie des matrices $K$ et $M$ :
+\begin{equation}
+    \left\{
+        \begin{aligned}    
+            \Phi_i^* K \Phi_j &= \omega_i^2 \Phi_i^* M \Phi_j\\
+            \Phi_i^* K \Phi_j = \Phi_j^* K \Phi_i &= \omega_j^2 \Phi_j^* M \Phi_i = \omega_j^2 \Phi_i^* M \Phi_j
+        \end{aligned}
+    \right\} \implies
+    (\omega_i^2 - \omega_j^2) \Phi_i^* M \Phi_j = 0.
+\end{equation}
+
+\begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \item Si $\omega_i \neq \omega_j$, alors $\Phi_i^* M \Phi_j = 0$.
+    \item Si $\omega_i = \omega_j$, alors on peut $M$-orthonormaliser les
+    vecteurs propres dans l'espace propre associé.
+\end{itemize}
+
+On trouve enfin 
+$\Phi_i^* K \Phi_j = \omega_i^2 \Phi_i^* M \Phi_j = \omega_i^2 \delta_{ij}$.
+
 Les fréquences naturelles du solide sont simplement obtenues par 
 $f_i = \omega_i / 2\pi$ [Hz].
+
+
 
 \newpage
 \section{Résolution numérique}
@@ -1175,7 +1213,7 @@ matrice-vecteur et résoudre un système linéaire, chaqun en $\mathcal{O}(n b)$
 
 \subsubsection{Déflation}
 Nous souhaitons trouver les $N$ premiers modes propres du système. Or 
-l'itération de la puissance converge uniquement vers le mode propre $\Phi_i$ 
+l'itération inverse converge uniquement vers le mode propre $\Phi_i$ 
 associé à
 \begin{equation}
     \lambda_{\max}(K^{-1} M)=\lambda_{\min}(K M^{-1})
@@ -1187,15 +1225,15 @@ propre associé à la valeur propre minimale $\lambda_1 = \omega_1^2$ :
 \begin{alignat}{2}
     & \qquad & x_0 &= \sum_{j=1}^{n} \alpha_j \Phi_j \qquad \text{avec }
     \lambda_1 < \lambda_2 < \dots < \lambda_{n-1} < \lambda_n\\
-    &\implies &\qquad x_{k} &= (K^{-1} M) x_{0} = \sum_{j=1}^{n} \alpha_j (K^{-1} M)^{k} \Phi_j
+    &\implies &\qquad x_{k} &= (K^{-1} M)^k x_{0} = \sum_{j=1}^{n} \alpha_j (K^{-1} M)^{k} \Phi_j
         = \sum_{j=1}^{n} \alpha_j \frac{1}{\lambda_j^k} \Phi_j\\
     &\implies &\qquad x_{k} &\to \alpha_1 \lambda_1^{-k} \Phi_1
         \qquad \text{si } \alpha_1 \neq 0\\
 \end{alignat}
 
 On constate donc qu'il est possible de trouver le second mode propre si l'itéré
-initial $x_0$ ne contient pas de composante $\Phi_1$. Lorsque ce premier mode
-propre est trouvé  il faut donc le "supprimer" d'un itéré $w$ pour 
+initial $x_0$ ne contient pas de composante $\alpha_1\Phi_1$. Lorsque ce premier 
+mode propre est trouvé, il faut donc le "supprimer" d'un itéré initial $w$ pour 
 converger vers le second mode propre. Le coefficient $\alpha_1$, nécessaire 
 pour y parvenir est obtenu grâce à une projection $M$-orthogonale :
 \begin{equation}
@@ -1214,7 +1252,10 @@ trouver le mode propre $(m+1)$ est donc
 
 En pratique, à cause des erreurs d'arrondis, les modes déflatés $\Phi_i$ avec 
 $i\leq m$ ont tendance à réapparaître dans les itérés suivants $x_k$. Il
-faut donc répéter la projection $M$-orthogonale à chaque itération.
+faut donc répéter la projection $M$-orthogonale à chaque itération. 
+
+La procédure est présentée en détails dans l'algorithme \ref{alg:inverse} 
+ci-dessous.
 
 \begin{algorithm}[H]
     \caption{Itération inverse avec déflation pour un problème généralisé $K\Phi = \omega^2 M \Phi$}
@@ -1238,14 +1279,18 @@ faut donc répéter la projection $M$-orthogonale à chaque itération.
         \State \textbf{Return:} $\Phi_i$, $\lambda_i$
     \EndFor
     \end{algorithmic}
+    \label{alg:inverse}
 \end{algorithm}
 
 
 \subsubsection{Shift}
 À l'instar de l'itération inverse classique, il est possible de \textit{shifter}
-le spectre du système pour trouver le mode propre autout d'une fréquence cible.
-En effet, $K-\mu M$ possède les mêmes vecteurs propres $\Phi_i$ que $K$ mais 
-avec des valeurs propres décalées $\lambda_i - \mu$ :
+le spectre du système pour trouver le mode propre autour d'une fréquence cible.
+Soustraire $\mu M$ à la matrice de raideur $K$ revient à décaler le spectre des
+valeurs propres d'une quantité $\mu$ :
+% En effet, $(K-\mu M)\Phi = \lambda M \Phi$ possède les mêmes vecteurs propres 
+% $\Phi_i$ que le problème $K\Phi = \lambda M \Phi$ mais avec des valeurs propres 
+% décalées $\lambda_i - \mu$ :
 \begin{equation}
     (K - \mu M) \Phi = K \Phi - \mu M \Phi = (\lambda - \mu) M \Phi
 \end{equation}
@@ -1255,21 +1300,306 @@ $(K - \mu M)^{-1} M $ possède une valeur propre
 $(\lambda_i - \mu)^{-1} \gg (\lambda_j - \mu)^{-1}$ pour $j \neq i$. 
 L'itération inverse
 \begin{equation}
-    x_{k+1} \gets (K - \mu M)^{-1} M x_k \iff
+    x_{k} \gets (K - \mu M)^{-1} M x_{k-1} \iff
     \left\{\begin{aligned}
-        z_{k} &\gets M x_k\\
-        (K - \mu M) x_{k+1} &\gets z_k
+        z_{k} &\gets M x_{k-1}\\
+        x_{k+1} &\gets \textrm{solve}(K - \mu M, z_k)
     \end{aligned}\right\}
 \end{equation}
 converge donc très vite vers le mode propre $\Phi_i$ associé à cette 
 fréquence propre $\lambda_i=\omega_i^2$.
 
-
 \subsection{Adimensionalisation}
+\label{sec:adim}
 
+Plusieurs grandeurs dimensionnelles sont présentes dans le système :
+\begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \item la masse volumique $\rho$ [kg/m$^3$],
+    \item le module d'élasticité $E$ [Pa],
+    \item la longueur caractéristique $L$ [m]
+\end{itemize}
+
+Sur base de ces paramètres, on peut définir un temps caractéristique
+\begin{equation}
+    T = L \sqrt{\frac{\rho}{E}} \quad\text{[s]}.
+\end{equation}
+
+En notant d'un tilde les grandeurs dimensionnelles et sans tilde les grandeurs
+adimensionnelles, on peut réécrire la formulation faible \eqref{eq:weak}
+\begin{align}
+    \int_{\tilde \Omega} \rho \frac{\partial^2 \tilde \uu}{\partial \tilde t^2} \cdot \tilde \vv \:\dd \tilde \xx
+    + \int_{\tilde \Omega} \tilde \stress(\tilde \uu) : \tilde \strain(\tilde \vv) \:\dd \tilde \xx &=
+    \int_{\tilde \Omega} \tilde{\mathbf{f}} \cdot \tilde \vv \:\dd \tilde \xx
+    + \int_{\tilde \Gamma} \tilde{\mathbf{g}} \cdot \tilde \vv \:\dd \tilde{\mathbf{s}}\\
+    % \implies \quad
+    \int_{\Omega} \frac{\rho L^2 E}{\rho L^2} \frac{\partial^2 \uu}{\partial t^2} \cdot \vv \:\dd \xx
+    + \int_{\Omega} E \stress(\uu) : \strain(\vv) \:\dd \xx &=
+    \int_{\Omega} \frac{E}{L} \mathbf{f} \cdot \vv L \:\dd \xx
+    + \int_{\Gamma} E \mathbf{g} \cdot \vv L \:\dd \mathbf{s} / L\\
+    \int_{\Omega} \frac{\partial^2 \uu}{\partial t^2} \cdot \vv \:\dd \xx
+    + \int_{\Omega} \stress(\uu) : \strain(\vv) \:\dd \xx &=
+    \int_{\Omega} \mathbf{f} \cdot \vv \:\dd \xx
+    + \int_{\Gamma} \mathbf{g} \cdot \vv \:\dd \mathbf{s}
+\end{align}
+
+On observe donc que tout paramètre physique a disparu de l'équation lorsque 
+les grandeurs sont adimensionnelles. Les liens entre grandeurs dimensionnelles
+et adimensionnelles sont résumés ici :
+\begin{equation}
+    \begin{alignedat}{4}
+        \tilde \xx &= L \xx &\qquad
+        \tilde\uu &= L \uu &\qquad
+        \tilde \stress &= E \stress &\qquad
+        \tilde{\mathbf{f}} &= \frac{E}{L} \mathbf{f}\\
+        \tilde t &= L \sqrt{\frac{\rho}{E}} \; t &\qquad
+        \tilde \vv &= L \vv &\qquad
+        \tilde \strain(\tilde \uu) &= \strain(\uu) &\qquad
+        % \tilde \strain &= \nabla_{\tilde \xx}^{\text{sym}} \tilde \uu = \nabla_{\xx}^{\text{sym}} \uu &\qquad
+        \tilde{\mathbf{g}} &= E \mathbf{g}.
+    \end{alignedat}
+    \label{eq:adim}
+\end{equation}
+
+En pratique, dans le code source, on scale les coordonnées $\xx$ par une 
+grandeur $L$ choisie en fonction de la géométrie du solide. Le système est
+ensuite assemblé sous sa forme adimensionnelle grâce aux relations 
+\eqref{eq:adim}.
+
+Lorsque le système adimensionnel $Kx=b$ est résolu, on retrouve les 
+déplacements et contraintes dimensionnels en se référant à nouveau aux
+relations \eqref{eq:adim}.
+
+Concernant les fréquences naturelles $\omega_i$, on les obtient sur base 
+des valeurs propres adimensionnelles $\lambda_i$ :
+\begin{equation}
+    \omega_i = \frac{\sqrt{\lambda_i}}{T} = \sqrt{\frac{\lambda_i E}{\rho L^2}} \quad\text{[rad/s]}.
+\end{equation}
+
+
+\newpage
 \section{Validation}
+
 \subsection{Poutre encastrée}
+Une poutre encastrée de longueur $L$, de section rectangulaire de hauteur $h$
+et largeur $b$, de densité $\rho$ et de raideur $E$ est soumise à son propre 
+poids.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{ground1} = [
+            fill,
+            pattern=north west lines, 
+            draw=none, 
+            minimum width=0.3cm,
+            minimum height=0.2cm
+        ]
+        \pgfmathsetmacro{\l}{15.0}
+        \pgfmathsetmacro{\h}{1.25}
+        \pgfmathsetmacro{\n}{6}
+        \pgfmathsetmacro{\s}{0.5}
+        \node[ground1, anchor=east, minimum height=3*\h cm] at (0, 0) {};
+        \draw[thick] (0,-\h/2) -- (\l,-\h/2);
+        \draw[thick] (\l,-\h/2) -- (\l,\h/2);
+        \draw[thick] (\l,\h/2) -- (0,\h/2);
+        \draw[red, very thick, domain=0:\l, samples=50] 
+            plot (\x, {-\s*(\x/\l)*(\x/\l)*(6 - 4*\x/\l + (\x/\l)*(\x/\l))});
+        \draw[gray, thick, dashed, domain=0:\l, samples=50] 
+            plot (\x, {\h/2-\s*(\x/\l)*(\x/\l)*(6 - 4*\x/\l + (\x/\l)*(\x/\l))});
+        \draw[gray, thick, dashed, domain=0:\l, samples=50] 
+            plot (\x, {-\h/2-\s*(\x/\l)*(\x/\l)*(6 - 4*\x/\l + (\x/\l)*(\x/\l))});
+        \draw[gray, thick, dashed] (\l, {\h/2-\s*3}) -- (\l, {-\h/2-\s*3});
+        % \foreach \i in {1,2,...,\n} {
+        %     \draw[->] ({\i *\l/(\n+1)},0) -- ({\i *\l/(\n+1)}, -\h/2) node[below] {$\mathbf{g}$};
+        % }
+    \end{tikzpicture}
+    \caption{Poutre encastrée-libre, selon la théorie d'Euler-Bernoulli.}
+    \label{fig:beam}
+\end{figure}
+
+\subsubsection{Flexion}
+La flèche de la poutre soumise à une distribution de force verticale $q(x)$
+satisfait
+\begin{equation}
+    \partial_x^4 v(x) = \frac{q(x)}{EI}
+\end{equation}
+où le moment d'inertie de la section de la poutre $I=bh^3/12$ dans notre cas. 
+On trouve donc pour notre poutre encastrée :
+\begin{equation}
+    v(x) = \frac{qL^4}{24EI} \frac{x^2}{L^2} \left(6 - 4\frac{x}{L} + \frac{x^2}{L^2}\right)
+    = \frac{-\rho g L^4}{2Eh^2}  \frac{x^2}{L^2} \left(6 - 4\frac{x}{L} + \frac{x^2}{L^2}\right).
+\end{equation}
+
+\subsubsection{Vibration}
+La vibration verticale d'une poutre droite satisfait l'équation
+\begin{equation}
+    \rho S\: \partial_t^2 v(x) = -EI\:\partial_x^4 v(x)
+\end{equation}
+où $S$ est l'aire de la section de la poutre. Avec nos conditions frontières,
+on trouve les modes propres $\Phi_i(x)$ et les fréquences naturelles 
+$\omega_i$ associées :
+\begin{equation}
+    \begin{aligned}
+        v(x,t) &= \sum_{i=1}^{\infty} \alpha_i \Phi_i(x) \cos(\omega_i t + \phi_i)\\
+        \omega_i &= \frac{\gamma_i^2}{L^2} \sqrt{\frac{EI}{\rho S}}
+            = \frac{\gamma_i^2}{L^2} \sqrt{\frac{E h^2}{12\rho}}\\
+        -1 &= \cos(\gamma) \cosh(\gamma) 
+        \implies \gamma \approx [1.875, 4.694, 7.855, 10.996\dots]\\
+        \Phi_i(x) &= 
+        (\sin \gamma_i - \sinh \gamma_i)(\sin (\gamma_i \xi) - \sinh (\gamma_i\xi)) \\
+        &+
+        (\cos \gamma_i + \cosh \gamma_i)(\cos (\gamma_i \xi) - \cosh (\gamma_i\xi))
+        \qquad\text{où}\quad \xi = x/L.\\
+    \end{aligned}
+\end{equation}
+
+\subsubsection{Analyse de convergence}
+L'analyse de convergence du code a été réalisée sur une poutre encastrée 
+de longueur $L=20$ m, de section rectangulaire de hauteur $H=1$ m, 
+avec $E=211$ GPa, $\rho=7850$ kg/m$^3$, $\nu=0.3$, $g=9.81$ m/s$^2$
+et suivant le modèle des déformation planes.
+Elle est présentée à la figure \ref{fig:convBeam}.
+
+L'erreur de déplacement $v$ pour le cas statique ou $\Phi$ pour l'analyse
+modale est mesurée le long de la fibre neutre.
+On constate que le modèle numérique 2D ne converge pas exactement vers
+la solution analytique 1D.
+ 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{./tests/conv_beam.pdf}
+    \caption{Analyse de convergence pour une poutre encastrée.}
+    \label{fig:convBeam}
+\end{figure}
+
 
 \subsection{Cylindre creux}
+
+Un cylindre creux de rayon interne $r_1$, de rayon externe $r_2$
+et de hauteur $H\gg R$ est soumis à une pression uniforme $p_1$ 
+sur sa face interne et à une pression uniforme $p_2$ sur sa face externe.
+
+La solution a ce problème peut s'obtenir 
+\begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \item analytiquement,
+    \item avec une simulation en déformation plane ou bien
+    \item avec une simulation en axisymétrique.
+\end{itemize}
+
+\subsubsection{Solution analytique}
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+        \pgfmathsetmacro{\r}{1.5}
+        \pgfmathsetmacro{\rr}{2.0}
+        \pgfmathsetmacro{\h}{4.5}
+        \pgfmathsetmacro{\w}{3.0}
+        \pgfmathsetmacro{\rii}{\r-0.35*\r}
+        \pgfmathsetmacro{\rio}{\r-0.02*\r}
+        \pgfmathsetmacro{\roi}{\rr+0.02*\r}
+        \pgfmathsetmacro{\roo}{\rr+0.25*\r}
+        \pgfmathsetmacro{\n}{16}
+        \pgfmathsetmacro{\m}{5}
+        \node at (-\w, 1.75*\rr) [anchor=center] {Coupe transversale};
+        \node at (+\w, 1.75*\rr) [anchor=center] {Tranche radiale};
+        \draw[thick] (-\w,0) circle (\r);
+        \draw[thick] (-\w,0) circle (\rr);
+        \fill[thick] (-\w,0) circle (1.5pt);
+        \foreach \i in {1,2,...,\n} {
+            \pgfmathsetmacro{\ttheta}{360 * \i/\n}
+            \draw[-Latex]
+                ({-\w+\rii*cos(\ttheta)}, {\rii*sin(\ttheta)}) -- 
+                ({-\w+\rio*cos(\ttheta)}, {\rio*sin(\ttheta)});
+                \draw[-Latex] 
+                ({-\w+\roo*cos(\ttheta)}, {\roo*sin(\ttheta)}) --
+                ({-\w+\roi*cos(\ttheta)}, {\roi*sin(\ttheta)});
+        }
+        \draw[thick, dashed] (\w, -\h*0.55) -- (\w, \h*0.55);
+        \draw[thick] (\w+\rr, -\h/2) rectangle(\w+\r, \h/2);
+        \foreach \i in {0,...,\m} {
+            \pgfmathsetmacro{\yy}{\h * (-1/2 + (\i+0.5)/(\m+1))}
+            \draw[-Latex] ({\w+\rii}, {\yy}) -- ({\w+\rio}, {\yy});
+            \draw[-Latex] ({\w+\roo}, {\yy}) -- ({\w+\roi}, {\yy});
+        }
+        \node at (+\w + \rii, 0) [anchor=east] {$p_1$};
+        \node at (+\w + \roo, 0) [anchor=west] {$p_2$};
+    \end{tikzpicture}
+    \caption{Cylindre creux soumis à une pression uniforme sur ses faces.}
+    \label{fig:cylinder}
+\end{figure}
+
+On peut faire l'hypothèse que le déplacement est radial et indépendant des 
+coordonées axiales et angulaires : $\uu(r,\theta,z) = u(r) \: \mathbf{e}_r$.
+On peut en dériver $\strain$ et $\stress$ grâce aux équations \eqref{eq:strain}
+et \eqref{eq:stress} :
+\begin{align}
+    \sigma_{rr} &= (2\mu + \lambda) \partial_r u + \lambda \frac{u}{r}\\
+    \sigma_{\theta\theta} &= \lambda \partial_r u + (2\mu+\lambda) \frac{u}{r}
+\end{align}
+
+La conservation de la quantité de mouvement dans la
+direction radiale donne alors
+\begin{align}
+    \partial_r^2 u + \frac{1}{r} \partial_r u - \frac{u}{r^2} &= 0
+\end{align}
+
+Grâce au changement de variable $t = \ln(r)$, on obtient la solution à cette 
+équation différentielle
+\begin{align}
+    \partial_t^2 u &= u \quad\iff\quad
+    u(t) = C_1 e^{t} + C_2 e^{-t} \quad\iff\quad
+    u(r) = A r + \frac{B}{r}.
+\end{align}
+
+Les conditions frontières en $r_1$ et $r_2$ nous permettent de déterminer les
+constantes $A$ et $B$ :
+\begin{gather}
+    -p_i = \sigma_{rr}(r_i) 
+    % &= (2\mu + \lambda) \left(A - \frac{B}{r_i^2}\right) + \lambda \left(A + \frac{B}{r_i^2}\right)\\
+    = 2(\mu + \lambda) A - 2\mu B \frac{1}{r_i^2}
+    = \frac{E}{1+\nu} \left[
+        \frac{A}{1-2\nu} - \frac{B}{r_i^2}
+    \right]
+    \qquad i=1,2\\
+    \implies \quad \left\{\:
+    \begin{aligned}
+        A &= \frac{(1+\nu)(1-2\nu)}{E} \frac{p_1 r_1^2 - p_2 r_2^2}{r_2^2 - r_1^2}\\
+        B &= -\frac{1+\nu}{E} \frac{r_1^2\: r_2^2}{r_2^2-r_1^2} (p_2 - p_1) .
+    \end{aligned}\right.
+\end{gather}
+
+Pour résumer, avec $r_1 = \alpha r_2$ et $\beta p_1 = p_2$, on a donc
+\begin{align}
+    \frac{u(r)}{r_2} &= 
+    % \frac{(1+\nu)(1-2\nu)}{E} \frac{p_1 r_1^2 - p_2 r_2^2}{r_2^2 - r_1^2} r 
+    % - \frac{1+\nu}{E} \frac{r_1^2 r_2^2}{r_2^2-r_1^2} \frac{p_2 - p_1}{r} \\&=
+    \frac{p_1}{E} \frac{1+\nu}{1 - \alpha^2} \: \left[
+        (1-2\nu) (\alpha^2 - \beta) \: \frac{r}{r_2}
+        + \alpha^2 (1 - \beta) \:\frac{r_2}{r}
+    \right]\\
+    \frac{\sigma_{rr}(r)}{p_1} &= 
+    % \frac{p_1 r_1^2 - p_2 r_2^2}{r_2^2 - r_1^2} + 
+    % \frac{r_1^2 r_2^2}{r_2^2 - r_1^2} \frac{p_2 - p_1}{r^2} = 
+    \frac{1}{1-\alpha^2} \left[
+        (\alpha^2 -\beta) - 
+        \alpha^2 (1 - \beta) \left(\frac{r_2}{r}\right)^2
+    \right]\\
+    \frac{\sigma_{\theta\theta}(r)}{p_1} &= 
+        % \lambda (A - B/r^2) + (2\mu + \lambda) (A + B / r^2) =
+        % 2(\mu + \lambda) A + 2\mu B/r^2 =
+        % \frac{p_1 r_1^2 - p_2 r_2^2}{r_2^2 - r_1^2} -
+        % \frac{r_1^2 r_2^2}{r_2^2 - r_1^2} \frac{p_2 - p_1}{r^2} = 
+        \frac{1}{1-\alpha^2} \left[
+            (\alpha^2 -\beta) + 
+            \alpha^2 (1 - \beta) \left(\frac{r_2}{r}\right)^2
+        \right]\\
+    \frac{\sigma_{zz}(r)}{p_1} &=
+        \nu \:\frac{\alpha^2 -\beta}{1-\alpha^2} 
+\end{align}
+
+\subsection{Solutions numériques}
 
 \end{document}

@@ -1,10 +1,11 @@
 # Nom du programme
-PROG := deformation
 
 SRC_DIR := src
 INC_DIR := include
 MODEL_DIR := models
 BUILD_DIR := build
+TEST_DIR := tests
+PROG := $(BUILD_DIR)/deformation
 
 # Choix du compilateur
 CC := gcc
@@ -26,11 +27,13 @@ LIB_DIR := -L $(GMSH_LIB_DIR)
 LDFLAGS := -Wl,-rpath,$(GMSH_LIB_DIR) #-fsanitize=address
 
 # Librairies à linker
-LDLIBS := -lgmsh -lopenblas -lm -llapack
+LDLIBS := -lgmsh -lopenblas -lm -llapacke
 
 
 SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 MODEL_FILES := $(wildcard $(MODEL_DIR)/*.c)
+TEST_SRC := $(wildcard $(TEST_DIR)/*.c)
+
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC_FILES)) \
        $(patsubst $(MODEL_DIR)/%.c, $(BUILD_DIR)/%.o, $(MODEL_FILES))
 
@@ -55,4 +58,13 @@ $(PROG): $(OBJS)
 
 # Nettoyage
 clean:
-	rm -f $(PROG) $(OBJS)
+	rm -f $(PROG) $(OBJS) $(BUILD_DIR)/test_* $(BUILD_DIR)/conv_*
+
+conv_%: $(TEST_DIR)/conv_%.c $(filter-out $(BUILD_DIR)/main.o, $(OBJS))
+	@echo "Building convergence $@..."
+	@$(CC) -g -o $(BUILD_DIR)/$@ $^ $(CFLAGS) $(INC_DIRS) $(LIB_DIR) $(LDLIBS) $(LDFLAGS)
+
+# Tests
+test_%: $(TEST_DIR)/test_%.c $(BUILD_DIR)/%.o $(BUILD_DIR)/matrix.o
+	@echo "Building test $@..."
+	@$(CC) -g -o $(BUILD_DIR)/$@ $^ $(CFLAGS) $(INC_DIRS) $(LIB_DIR) $(LDLIBS) $(LDFLAGS)

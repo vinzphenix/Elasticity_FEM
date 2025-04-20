@@ -12,7 +12,7 @@
 
 static double scale;
 static const double W = 20.;
-static const double H = 1.5;
+static const double H = 1.0;
 static const double G = 9.81;
 
 static const double _E = 211e9;
@@ -63,14 +63,19 @@ double size_field_beam(
 void mesh_beam(double mesh_size_factor, int e_type) {
 
     // Requires plane stress
-    if (1) {
+    if (0) {
         // q L⁴/8EI   ---   I = B H³/12   ---    q = ρgS   ---   S = BH
         // --> v = 3/2 (ρg) L⁴ / E H²  [m]
         double u_clamped = -3. / 2. * _rho * G * W * W * W * W / (_E * H * H);
         printf("v_expected : %10.6lf\n", u_clamped);
         // 2pi f = k²/L² sqrt(EI / ρS) = k²/L² sqrt(E H² / 12ρ) [s⁻¹]
         // double ks[4] = {4.730, 7.853, 10.996, 14.137}; // free-free
-        double ks[4] = {1.875, 4.694, 7.855, 10.996}; // clamped-free
+        double ks[4] = {
+            1.87510406871, 
+            4.69409113297,
+            7.85475743824,
+            10.9955407349
+        }; // clamped-free
         for (int i = 0; i < 4; i++) {
             double om = SQUARE(ks[i] / W) * sqrt(_E * H * H / 12. / _rho);
             printf("    freq_%d : %7.3lf Hz\n", i, om / (2. * M_PI));
@@ -81,6 +86,7 @@ void mesh_beam(double mesh_size_factor, int e_type) {
     int ierr;
     int rect = gmshModelOccAddRectangle(0., -H / 2., 0., W, H, -1, 0.0, &ierr);
     gmshModelOccSynchronize(&ierr);
+
     int force_x[] = {};
     int force_y[] = {};
     int force_n[] = {}; //3

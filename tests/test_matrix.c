@@ -28,7 +28,6 @@ void random_mat(idx_t n, idx_t k, double ratio, CSRMatrix **csr_ptr) {
     for (idx_t i = 0; i < n; i++) {
         bound = (i < k) ? 0 : i - k;
         for (idx_t j = bound; j < i; j++) {
-            idx_t col = rand() % i;
             K->a[i][j] = -(double)rand() / (double)RAND_MAX;
             if (fabs(K->a[i][j]) < 1. - ratio / k) {
                 K->a[i][j] = 0.0;
@@ -46,7 +45,7 @@ void random_mat(idx_t n, idx_t k, double ratio, CSRMatrix **csr_ptr) {
     *csr_ptr = mat;
 }
 
-double *csr_to_full(CSRMatrix *csr, double *L) {
+void csr_to_full(CSRMatrix *csr, double *L) {
     for (idx_t i = 0; i < csr->n; i++) {
         for (idx_t j = csr->row_ptr[i]; j < csr->row_ptr[i + 1]; j++) {
             idx_t idx = i * csr->n + csr->col_idx[j];
