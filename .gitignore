@@ -4,8 +4,8 @@
 !*.*
 !Makefile
 
-# ignore pycache
 __pycache__/
+build/
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
