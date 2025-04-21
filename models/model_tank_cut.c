@@ -11,7 +11,7 @@
 // -----------------------------------------------------------------------------
 
 static double scale;
-static const double Ri = 0.1;
+static const double Ri = 0.10;
 static const double Ro = 0.15;
 static const double Pi = 5e3;
 static const double Po = 1e3;
@@ -19,7 +19,7 @@ static const double Po = 1e3;
 static const double _E = 40e9;
 static const double _nu = 0.20;
 static const double _rho = 2300.;
-static const double _L = Ri;
+static const double _L = Ro;
 
 void set_physics_tank_cut(double params[4], Model2D *type) {
     params[0] = _E;
@@ -74,7 +74,7 @@ double size_field_tank_cut(
 
 void mesh_tank_cut(double mesh_size_factor, int e_type) {
 
-    compute_stress_tank(Ri, Ro, Pi, Po, _nu);
+    // compute_stress_tank(Ri, Ro, Pi, Po, _nu);
 
     int ierr;
     int p1 = gmshModelOccAddPoint(Ri, 0., 0., 0., -1, &ierr);

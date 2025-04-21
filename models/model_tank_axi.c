@@ -15,13 +15,12 @@ static const double Ri = 0.1;
 static const double Ro = 0.15;
 static const double Pi = 5e3;
 static const double Po = 1e3;
-static const double H = 0.2;
-// static const double G = 9.81;
 
 static const double _E = 40e9;
 static const double _nu = 0.20;
 static const double _rho = 2300.;
-static const double _L = Ri;
+static const double _L = Ro;
+static const double H = 0.2;
 
 void set_physics_tank_axi(double params[4], Model2D *type) {
     params[0] = _E;
@@ -76,7 +75,7 @@ double size_field_tank_axi(
 
 void mesh_tank_axi(double mesh_size_factor, int e_type) {
 
-    compute_stress_tank(Ri, Ro, Pi, Po, _nu);
+    // compute_stress_tank(Ri, Ro, Pi, Po, _nu);
 
     int ierr;
     int rect = gmshModelOccAddRectangle(Ri, 0., 0., Ro - Ri, H, -1, 0.0, &ierr);

@@ -203,7 +203,7 @@ void save_errors(FE_Model *model, int n_mode, double msf, double *errors) {
     char filename[64] = "";
     int inc = 4;
 
-    strcat(filename, "./tests/conv_beam");
+    strcat(filename, "./analysis/conv_beam");
     strcat(filename, n_mode == 0 ? "_static.txt" : "_eigen.txt");
     FILE *fp = fopen(filename, "a");
     if (fp == NULL) {

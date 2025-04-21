@@ -33,7 +33,7 @@ To compile the files, just type ```make```.
 
 To execute it:
 ```sh
-./deformation <model_name> <nb> <mesh_size_factor>
+./build/deformation <model_name> <nb> <mesh_size_factor>
 ```
 where 
 - `<model_name>` must be one of the models in `models/`, 
@@ -44,10 +44,14 @@ where
 
 ## Structure
 
-    ├── include           <- Header files .h
-    ├── models            <- Models with geometry + b.c.
-    ├── src               <- Source files .c
-    └── tests             <- Test files + benchmark files
+    ├── analysis/          <- Convergence/performance (.c, .py, .txt)
+    ├── include/           <- Header files .h
+    ├── models/            <- Models with geometry + b.c.
+    ├── src/               <- Source files .c
+    ├── tests/             <- Test files + benchmark files
+    ├── fem_notes.tex      <- Synthesis of the math/physics/programming
+    ├── Makefile
+    └── README.md
 
 ## Solver capabilities
 - [x] P1/Q1 finite elements
@@ -64,7 +68,7 @@ where
 
 The solver was validated against analytic solutions
 - in 2D with a clamped rectangular beam
-- in 2D and axisymmetric with a hollow cylinder
+- in 2D and axisymmetric with a thick walled hollow-cylinder
 
 ## Post-processing
 The post-processing is done with `Gmsh`. Multiple views are available to 
@@ -128,3 +132,28 @@ Write a file `models/<name>.c` with at least 5 functions
    
 Add your functions in `src/model.c` so that they can be selected at run time.
 
+## Convergence analysis
+Currently, two convergence analysis are implemented in the directory `analysis/` 
+to validate this FE code:
+
+- `conv_beam.c` and 
+- `conv_tank.c`
+
+They can be compiled and executed with 
+
+```sh
+make conv_<model>
+./build/conv_<model>
+```
+
+The results of the many runs are written in `analysis/[...].txt` 
+files, and can be visualized with the according Python script `analysis/conv_<model>.py`.
+
+## Tests
+There are various tests in the directory `tests/`. They can be compiled and 
+executed with 
+
+```sh
+make test_<name>
+./build/test_<name>
+```

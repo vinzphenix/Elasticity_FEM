@@ -71,14 +71,14 @@ def plot_convergence(data_stc, data_eig):
         ax.grid(ls=":", which="both")
 
     fig.tight_layout()
-    # fig.savefig("./tests/conv_beam.pdf", bbox_inches="tight")
+    # fig.savefig("./analysis/conv_beam.pdf", bbox_inches="tight")
     plt.show()
     return
 
 
 def beam():
-    data_stc = load_convergence("./tests/conv_beam_static.txt")
-    data_eig = load_convergence("./tests/conv_beam_eigen.txt")
+    data_stc = load_convergence("./analysis/conv_beam_static.txt")
+    data_eig = load_convergence("./analysis/conv_beam_eigen.txt")
     plot_convergence(data_stc, data_eig)
     return
 

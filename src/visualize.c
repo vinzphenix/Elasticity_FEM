@@ -44,7 +44,17 @@ void compute_local_stress(
     }
 }
 
-void cartesian_to_polar(size_t n_node, double *sigma, double *x) {
+/**
+ * @brief Converts cartesian displacements and stresses in polar coordinates
+ * @param n_node Number of nodes of the mesh
+ * @param num Index mapping of the nodes for the displacement
+ * @param sigma Array of size 9*n_node with tensor components
+ * @param u Array of n_node with displacements (permuted)
+ * @param x Coordinates of the mesh
+ */
+void cartesian_to_polar(
+    size_t n_node, const size_t *num, const double *x, double *sigma, double *u
+) {
     double s_xx, s_yy, s_xy, r, c, s, c2, s2;
     for (size_t i = 0; i < n_node; i++) {
         s_xx = sigma[9 * i + 0];
@@ -59,6 +69,12 @@ void cartesian_to_polar(size_t n_node, double *sigma, double *x) {
         sigma[9 * i + 4] = s_xx * s2 + s_yy * c2 - 2. * s_xy * c * s;
         sigma[9 * i + 1] = (s_yy - s_xx) * c * s + s_xy * (c2 - s2);
         sigma[9 * i + 3] = sigma[9 * i + 1];
+        if (u) {
+            s_xx = u[2 * num[i] + 0];
+            s_yy = u[2 * num[i] + 1];
+            u[2 * num[i] + 0] = +c * s_xx + s * s_yy;
+            u[2 * num[i] + 1] = -s * s_xx + c * s_yy;
+        }
     }
 }
 
@@ -421,7 +437,7 @@ void visualize_stress(
     compute_nodal_stress_avg(model, sol, sig_avg);
 #endif
     if (model->m_type != AXISYMMETRIC && CART_TO_POLAR) {
-        cartesian_to_polar(nn, sig_lsq, model->coords);
+        cartesian_to_polar(nn, model->idx_map, model->coords, sig_lsq, NULL);
     }
     for (size_t i = 0; i < nn; i++) {
         nodes[i] = i + 1;

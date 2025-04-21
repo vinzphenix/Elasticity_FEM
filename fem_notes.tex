@@ -931,6 +931,7 @@ On constate fort heureusement qu'avec $n_1=1=-t_2$ et $n_2=0=t_1$, on retombe su
 le cas particulier de la section \ref{sec:dirichlet-aligned}.
 
 \subsection{Calcul des contraintes}
+\label{sec:contraintes}
 Lorsque le système est résolu, on obtient le déplacement $\mathbf{u}_j$ 
 pour chaque n\oe ud $j$. On peut ensuite calculer aux points d'intégration
 les déformations grâce à la relation \eqref{eq:strain} et enfin les contraintes 
@@ -1468,7 +1469,7 @@ la solution analytique 1D.
  
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{./tests/conv_beam.pdf}
+    \includegraphics[width=\textwidth]{./analysis/conv_beam.pdf}
     \caption{Analyse de convergence pour une poutre encastrée.}
     \label{fig:convBeam}
 \end{figure}
@@ -1597,9 +1598,48 @@ Pour résumer, avec $r_1 = \alpha r_2$ et $\beta p_1 = p_2$, on a donc
             \alpha^2 (1 - \beta) \left(\frac{r_2}{r}\right)^2
         \right]\\
     \frac{\sigma_{zz}(r)}{p_1} &=
-        \nu \:\frac{\alpha^2 -\beta}{1-\alpha^2} 
+        2\nu \:\frac{\alpha^2 -\beta}{1-\alpha^2} 
 \end{align}
 
 \subsection{Solutions numériques}
+L'analyse de convergence du code a été réalisée sur un cylindre creux de
+rayon interne $r_1=10$ cm, de rayon externe $r_2=15$ cm, de hauteur $H=20$ cm,
+avec $E=40$ GPa, $\rho=2300$ kg/m$^3$ et $\nu=0.2$. Elle est présentée à la
+figure \ref{fig:convTank}.
+
+Dans le cas plane, le vecteur déplacement $\uu$ et le tenseur des contraintes 
+$\stress$ sont transformées des coordonées cartésiennes en coordonnées 
+cylindriques. L'erreur $L_2$ est ensuite calculée sur base de la solution
+analytique :
+\begin{align}
+    \textrm{e}^2(\uu^h) &= 
+    \frac
+        {\displaystyle \int_{\Omega} \left\|\uu^h - \uu^*\right\|^2 \:\dd \xx}
+        {\displaystyle \int_{\Omega} \left\|\uu^*\right\|^2 \:\dd \xx}
+    = \frac
+        {\displaystyle \int_{\Omega} \left(u_r^h - u_r^*\right)^2 \:\dd \xx}
+        {\displaystyle \int_{\Omega} \left(u_r^*\right)^2 \:\dd \xx}\\
+    \textrm{e}^2(\sigma_i^h) &=  
+    \frac
+        {\displaystyle \int_{\Omega} \left(\sigma_i^h - \sigma_i^*\right)^2 \:\dd \xx}
+        {\displaystyle \int_{\Omega} \left(\sigma_i^*\right)^2 \:\dd \xx}
+    \quad \text{avec } i \in \{rr, \theta\theta, zz\}\\
+\end{align}
+
+On constate que les modèles 2D et 3D convergent à la même vitesse vers la 
+solution, mais que le modèle 3D présente tout de même une erreur légèrement 
+plus faible pour une taille de maille similaire. 
+
+On constate également que le taux de convergence pour les contraintes est 
+superlinéaire quel que soit la méthode de calcul utilisée 
+(moindres carrés ou moyenne pondérée, cf. section \ref{sec:contraintes}
+pour plus de détails).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./analysis/conv_tank.pdf}
+    \caption{Analyse de convergence pour un cylindre creux.}
+    \label{fig:convTank}
+\end{figure}
 
 \end{document}
