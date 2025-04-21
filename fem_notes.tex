@@ -1604,8 +1604,9 @@ Pour résumer, avec $r_1 = \alpha r_2$ et $\beta p_1 = p_2$, on a donc
 \subsection{Solutions numériques}
 L'analyse de convergence du code a été réalisée sur un cylindre creux de
 rayon interne $r_1=10$ cm, de rayon externe $r_2=15$ cm, de hauteur $H=20$ cm,
-avec $E=40$ GPa, $\rho=2300$ kg/m$^3$ et $\nu=0.2$. Elle est présentée à la
-figure \ref{fig:convTank}.
+avec $E=40$ GPa, $\rho=2300$ kg/m$^3$, $\nu=0.2$, soumis à une pression interne 
+de $5$ kPa et à une pression externe de $1$ kPa.
+L'analyse est présentée à la figure \ref{fig:convTank}.
 
 Dans le cas plane, le vecteur déplacement $\uu$ et le tenseur des contraintes 
 $\stress$ sont transformées des coordonées cartésiennes en coordonnées 
@@ -1635,7 +1636,7 @@ superlinéaire quel que soit la méthode de calcul utilisée
 (moindres carrés ou moyenne pondérée, cf. section \ref{sec:contraintes}
 pour plus de détails).
 
-\begin{figure}
+\begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{./analysis/conv_tank.pdf}
     \caption{Analyse de convergence pour un cylindre creux.}
