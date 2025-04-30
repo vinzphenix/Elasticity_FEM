@@ -1,3 +1,13 @@
+/**
+ * File:    model_exam.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: 
+ *   Set the physics / geometry / boundary conditions of 
+ *   a rectangle under compression (LEPL1110 2024 exam)
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "models.h"
 #include "utils_models.h"
 #include <gmshc.h>
@@ -5,10 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// -----------------------------------------------------------------------------
-// EXAM 2024
-// -----------------------------------------------------------------------------
 
 static double scale;
 static const double W = 2.0;

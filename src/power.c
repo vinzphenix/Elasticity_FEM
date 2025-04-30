@@ -1,3 +1,15 @@
+/**
+ * File:    power.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Power iteration for the modal analysis
+ * 
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "power.h"
 #include "matrix.h"
 #include <cblas.h>

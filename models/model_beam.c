@@ -1,14 +1,20 @@
+/**
+ * File:    model_beam.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: 
+ *   Set the physics / geometry / boundary conditions of 
+ *   a beam (clamped or free)
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "models.h"
 #include "utils_models.h"
-#include <FL/math.h>
+#include <math.h>
 #include <gmshc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// -----------------------------------------------------------------------------
-// Classic clamped/free beam
-// -----------------------------------------------------------------------------
 
 static double scale;
 static const double W = 20.;

@@ -1,3 +1,11 @@
+/**
+ * File:    utils_models.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: utility functions for the models
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "utils_models.h"
 #include <gmshc.h>
 #include <math.h>

@@ -1,3 +1,15 @@
+/**
+ * File:    renumber.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Node renumbering strategies
+ * 
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "renumber.h"
 #include <stdio.h>
 #include <stdlib.h>

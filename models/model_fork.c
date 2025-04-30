@@ -1,16 +1,22 @@
+/**
+ * File:    model_fork.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: 
+ *   Set the physics / geometry / boundary conditions of 
+ *   a tuning fork
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "models.h"
 #include "utils_models.h"
 #include <gmshc.h>
-#include <FL/math.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define RR_FLAG 1
-
-// -----------------------------------------------------------------------------
-// Tuning fork
-// -----------------------------------------------------------------------------
 
 static double scale;
 static const double W = 0.030;

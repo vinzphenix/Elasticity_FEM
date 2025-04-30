@@ -1,3 +1,15 @@
+/**
+ * File:    main.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Main program for the FEM simulation toolkit for linear elasticity.
+ * 
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #define _POSIX_C_SOURCE 199309L
 #include "elasticity.h"
 #include "model.h"
@@ -33,7 +45,7 @@ void save_solutions(
     fprintf(f, "# %d\n", nb);
     for (int i_eig = 0; i_eig < nb; i_eig++) {
         fprintf(f, "# %zu ", nn);
-        if (eigw != NULL) 
+        if (eigw != NULL)
             fprintf(f, "%20.15le", eigw[i_eig]);
         fprintf(f, "\n");
         for (int i = 0; i < nn; i++) {
@@ -56,7 +68,7 @@ void solve_deformation(FE_Model *model) {
     add_bulk_source(model, rhs);
     enforce_bd_conditions(model, rhs);
     // write_band_sym(model->K, rhs, "K.txt");
-    
+
     clock_gettime(CLOCK_MONOTONIC, &t2);
     printf("%30s : %6.3lf s\n", "Boundaries", TIMESP(t1, t2));
 

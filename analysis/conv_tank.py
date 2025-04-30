@@ -1,3 +1,15 @@
+"""
+File : conv_tank.py
+Author : Vincent Degrooff
+Date : 2025
+
+Description :
+    Display results of the thick-wall cylinder convergence analysis
+    
+Project :
+    FEM Simulation Toolkit for Linear Elasticity
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

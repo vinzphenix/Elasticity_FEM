@@ -1,3 +1,15 @@
+/**
+ * File:    test_power.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * 
+ * Description: 
+ *   Test the power iteration method (requires LAPACK to validate results)
+ * 
+ * Project: 
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "lapacke.h"
 #include "matrix.h"
 #include "power.h"

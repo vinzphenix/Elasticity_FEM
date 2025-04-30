@@ -9,6 +9,8 @@ typedef enum Model2D {
     AXISYMMETRIC
 } Model2D;
 
+#define M_PI 3.14159265358979323846264
+
 void set_physics_beam(double params[4], Model2D *type);
 void set_bk_source_beam(double rho, const double xy[2], double f[2]);
 void set_bd_disp_beam(int ent, char kind, const double xy[2], double u[1]);

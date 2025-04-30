@@ -1,3 +1,16 @@
+"""
+File : perf_CG.py
+Author : Vincent Degrooff
+Date : 2025
+
+Description :
+    Display results of the CG complexity analysis
+    
+Project :
+    FEM Simulation Toolkit for Linear Elasticity
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

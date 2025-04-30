@@ -1,3 +1,15 @@
+/**
+ * File:    model.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Setup and manage the finite element model structure
+ *
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "model.h"
 #include "matrix.h"
 #include "models.h"

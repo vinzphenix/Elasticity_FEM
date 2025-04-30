@@ -1,3 +1,15 @@
+/**
+ * File:    conv_tank.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * 
+ * Description: 
+ *   Runs a convergence study on the thick-walled cylinder problem.
+ * 
+ * Project: 
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "elasticity.h"
 #include "model.h"
 #include "power.h"

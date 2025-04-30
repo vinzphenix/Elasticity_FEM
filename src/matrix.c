@@ -1,3 +1,15 @@
+/**
+ * File:    matrix.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Linear algebra operations in band and sparse format
+ * 
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "matrix.h"
 #include <cblas.h>
 #include <math.h>

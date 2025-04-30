@@ -1,4 +1,16 @@
-#include "visualize.h"
+/**
+ * File:    visualize.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Visualization of the finite element solution (displacement, stress...)
+ * 
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
+ #include "visualize.h"
 #include "elasticity.h"
 #include "model.h"
 #include "renumber.h"

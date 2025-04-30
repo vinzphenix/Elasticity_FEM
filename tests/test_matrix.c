@@ -1,3 +1,15 @@
+/**
+ * File:    test_matrix.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * 
+ * Description: 
+ *   Test the matrix module
+ * 
+ * Project: 
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #define _POSIX_C_SOURCE 199309L
 #include "matrix.h"
 #include <cblas.h>

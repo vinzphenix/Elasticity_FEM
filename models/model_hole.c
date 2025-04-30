@@ -1,3 +1,13 @@
+/**
+ * File:    model_hole.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: 
+ *   Set the physics / geometry / boundary conditions of 
+ *   a rectangular plate with a circular hole under tension
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "models.h"
 #include "utils_models.h"
 #include <gmshc.h>
@@ -5,10 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// -----------------------------------------------------------------------------
-// Rectangular plate with a hole
-// -----------------------------------------------------------------------------
 
 static double scale;
 static const double W = 2.0;

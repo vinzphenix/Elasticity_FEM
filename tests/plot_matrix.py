@@ -1,3 +1,16 @@
+"""
+File : plot_matrix.py
+Author : Vincent Degrooff
+Date : 2025
+
+Description :
+    Display the sparsity pattern of the stiffness and mass matrices
+    and compute their eigenvalues.
+    
+Project :
+    FEM Simulation Toolkit for Linear Elasticity
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.sparse as sp

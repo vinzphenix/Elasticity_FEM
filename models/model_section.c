@@ -1,3 +1,13 @@
+/**
+ * File:    model_section.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: 
+ *   Set the physics / geometry / boundary conditions of 
+ *   a beam with a rotated H cross-section
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "models.h"
 #include "utils_models.h"
 #include <gmshc.h>
@@ -5,10 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// -----------------------------------------------------------------------------
-// Beam rotated H Cross-section
-// -----------------------------------------------------------------------------
 
 static double scale;
 static const double W = 2.;

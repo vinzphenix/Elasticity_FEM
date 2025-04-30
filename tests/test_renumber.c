@@ -1,3 +1,15 @@
+/**
+ * File:    test_renumber.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * 
+ * Description: 
+ *   Test the renumbering strategy RCMK
+ * 
+ * Project: 
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "renumber.h"
 #include <stdio.h>
 #include <stdlib.h>

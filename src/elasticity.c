@@ -1,3 +1,15 @@
+/**
+ * File:    elasticity.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ *
+ * Description:
+ *   Matrix assembly and boundary conditions
+ * 
+ * Project:
+ *   FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "elasticity.h"
 #include "model.h"
 #include <cblas.h>

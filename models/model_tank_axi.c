@@ -1,14 +1,20 @@
+/**
+ * File:    model_tank_axi.c
+ * Author:  Vincent Degrooff
+ * Created: 2025
+ * Description: 
+ *   Set the physics / geometry / boundary conditions of 
+ *   a thick-walled cylinder under pressure (axisymmetric formulation)
+ * Project: FEM Simulation Toolkit for Linear Elasticity
+ */
+
 #include "models.h"
 #include "utils_models.h"
-#include <FL/math.h>
+#include <math.h>
 #include <gmshc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// -----------------------------------------------------------------------------
-// Cylinder using axisymmetric formulation
-// -----------------------------------------------------------------------------
 
 static double scale;
 static const double Ri = 0.1;
