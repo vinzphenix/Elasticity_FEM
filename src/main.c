@@ -186,9 +186,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Simulation parameters
-    const ElementType e_type = TRI;
+    const ElementType e_type = QUAD;
     const Renumbering renum = RENUM_RCMK;
-    const LinearSolver solver = Band;
+    const LinearSolver solver = CG_ILU0;
 
     FE_Model *model = create_FE_Model(argv[1], e_type, renum, solver);
     display_info(model, 1, NULL);

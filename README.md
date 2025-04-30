@@ -79,6 +79,17 @@ visualize the deformation:
 - Stress (Min/Max eigenvalue)
 - Stress components (cartesian / polar)
 
+## Some results
+
+### Tuning fork undergoing lateral force
+![Tuning fork](./figures/fork.png)
+
+### Plate with a circular hole undergoing lateral tension
+![Plate hole](./figures/hole_1.png)
+
+### Cantilever beam eigenmodes
+![Plate hole](./figures/beams.png)
+
 ## Dependencies
 - `gmsh` to generate the mesh and to realize the post-processing
 - `openblas` for linear algebra
